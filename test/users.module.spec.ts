@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UsersModule } from '../src/modules/users/user.module';
-import { UsersService } from '../src/modules/users/user.service';
+import { UsersModule } from '../src/user-management/users/user.module';
+import { UsersService } from '../src/user-management/users/user.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '../src/modules/users/user.entity';
+import { User } from '../src/user-management/users/user.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 

@@ -1,9 +1,10 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import { loggerGlobal } from "./middlewares/logger.middleware";
+import { loggerGlobal } from "./utils/middlewares/logger.middleware";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 async function bootstrap() {
+    console.log(process.env.PORT)
     const app = await NestFactory.create(AppModule);
     app.use(loggerGlobal);
     const config = new DocumentBuilder()

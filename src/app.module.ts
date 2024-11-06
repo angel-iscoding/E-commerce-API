@@ -1,21 +1,22 @@
 import { Module, OnApplicationBootstrap } from "@nestjs/common"; 
-import { UsersModule } from './modules/users/user.module';
-import { ProductsModule } from "./modules/products/product.module";
+import { UsersModule } from './user-management/users/user.module';
+import { ProductsModule } from "./store-management/products/product.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import typeOrmConfig from "./config/typeorm"
-import { CategoriesModule } from "./modules/categories/category.module";
-import { CategoriesService } from "./modules/categories/category.service";
-import { ProductsService } from "./modules/products/product.service";
-import { OrderModule } from "./modules/orders/order.module";
-import { OrderDetailModule } from "./modules/ordersDetails/orderDetail.module";
-import { AuthModule } from "./modules/auth/auth.module";
-import { CloudModule } from "./modules/cloud/cloud.module";
+import { CategoriesModule } from "./store-management/categories/category.module";
+import { CategoriesService } from "./store-management/categories/category.service";
+import { ProductsService } from "./store-management/products/product.service";
+import { OrderModule } from "./store-management/orders/order.module";
+import { OrderDetailModule } from "./store-management/ordersDetails/orderDetail.module";
+import { AuthModule } from "./auth/auth.module";
+import { CloudModule } from "./user-management/cloud/cloud.module";
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
+            envFilePath: '.env.development',
             load: [typeOrmConfig],
         }),
         TypeOrmModule.forRootAsync({

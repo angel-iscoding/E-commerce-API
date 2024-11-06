@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from '../src/modules/auth/auth.service';
-import { UsersService } from '../src/modules/users/user.service';
+import { AuthService } from '../src/auth/auth.service';
+import { UsersService } from '../src/user-management/users/user.service';
 import { JwtService } from '@nestjs/jwt';
-import { SignUpDto } from '../src/dto/sing-up.dto';
+import { SignUpDto } from '../src/database/sing-up.dto';
 import * as bcrypt from 'bcryptjs';
 import { Role } from '../src/config/role.enum';
 
