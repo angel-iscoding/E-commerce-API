@@ -1,0 +1,51 @@
+Crear el modelo,controllador, servicio y repositorio para las órdenes de compra (orders), dentro de este repositorio crearemos la lógica necesaria para que un usuario pueda realizar una compra de un “carrito de productos”.
+
+La orden de compra será recibida mediante una solicitud de HTTP Post al endpoint /orders cuyo cuerpo tendrá la siguiente estructura:
+
+{
+
+  "userId":"UUID del usuario",
+
+  "products":[
+
+     {
+
+   "id":"UUID producto 1"
+
+  },
+
+  {
+
+    "id":"UUID producto 2"
+
+  }
+
+    ]
+
+}
+
+
+
+Por ahora los usuarios solo pueden agregar una unidad de cada producto dentro de su carrito.
+
+En el repositorio de orders tendrás que crear 2 métodos diferentes getOrder y addOrder.
+
+addOrder
+
+Busca a un usuario por id.
+
+Crea un registro en la tabla orders con el usuario encontrado.
+
+Busca los productos por id recibidos en la request actualizando el total de la compra y reduciendo el stock del producto. correspondiente. (al realizar la búsqueda de todos los productos aquellos con stock igual a 0 no deben ser mostrados).
+
+Construye y registra un detalle de compra con los productos seleccionados.
+
+Devuelve la orden de compra con el precio y id del detalle de compra.
+
+
+
+getOrder
+
+Busca una orden recibida por id.
+
+Devuelve un objeto con la orden y los detalles de la orden (el detalle de la orden debe contener un array con todos los productos adquiridos).
