@@ -2,11 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { OrderRepository } from './order.repository';
 import { Order } from './order.entity';
 import { UsersRepository } from '../../user-management/users/user.repository';
-import { NewOrderDto } from 'src/database/orders/newOrder.dto';
-import { cartDto } from 'src/database/cartDto.dto';
 import { ProductsRepository } from '../products/product.repository';
-import { NewOrderDetailDto } from 'src/database/ordersDetails/newOrderDetails.dto';
 import { OrderDetailRepository } from '../ordersDetails/orderDetail.repository';
+import { OrderDto } from 'src/database/orders/order.dto';
+import { CartService } from '../cart/cart.service';
+import { OrderDetail } from '../ordersDetails/orderDetail.entity';
 
 @Injectable()
 export class OrderService {
@@ -14,73 +14,55 @@ export class OrderService {
         private readonly ordersRepository: OrderRepository,
         private readonly ordersDetailRepository: OrderDetailRepository, 
         private readonly usersRepository: UsersRepository,
-        private readonly productsRepository: ProductsRepository
+        private readonly productsRepository: ProductsRepository,
+        private readonly cartService: CartService,
     ) {}
 
-    /**
-     * Crea una nueva orden de compra
-     * @param cart Datos del carrito de compras
-     * @returns La orden creada
-     */
-    async createOrder(cart: cartDto): Promise<Order> {
+    async createOrder(order: OrderDto): Promise<Order> {
 
-    console.log(cart.id);
+        const user = await this.usersRepository.getUserById(order.user);
+        const timestamp = new Date();
 
-    const user = await this.usersRepository.getUserById(cart.id);
-    const timestamp = new Date();
+        if (!user) throw new NotFoundException('No existe el usuario');
 
-    if (!user) throw new NotFoundException('No existe el usuario');
+        // Crear la orden sin detalles iniciales
+        const newOrder = new Order();
+        newOrder.date = timestamp;
 
-    // Crear la orden sin detalles iniciales
-    const newOrder = await this.ordersRepository.create({
-        date: timestamp,
-        user: user
-    });
+        // Obtener productos existentes l
+        const products = await this.cartService.getAllProductsOfUserCart(user.id)
 
-    // Guardar la nueva orden en la base de datos
-    const createdOrder = await this.ordersRepository.save(newOrder);
+        const existingProducts = await Promise.all (
+            products.map(async (productId) => {
+                const product = await this.productsRepository.getProductById(productId);
+                return product || null;
+            })
+        )
 
-    // Obtener productos existentes y calcular el precio total
-    const existingProducts = await Promise.all(
-        cart.products.map(async (productId) => {
-            const product = await this.productsRepository.getProductById(productId.id);
-            if (!product) throw new NotFoundException(`Producto con id ${productId.id} no encontrado`);
-            return product;
-        })
-    );
+        // Guardar la nueva orden en la base de datos
+        const createdOrder = await this.ordersRepository.save(newOrder);
 
-    const totalPrice = existingProducts.reduce((sum, product) => sum + product.price, 0);
+        const totalPrice = existingProducts.reduce((sum, product) => sum + product.price, 0); 
 
-    // Crear el detalle de la orden
-    const orderDetail = await this.ordersDetailRepository.create({
-        price: totalPrice,
-        order: createdOrder,
-        products: existingProducts
-    });
+        // Crear el detalle de la orden
+        const orderDetail = new OrderDetail();
 
-    // Guardar el detalle de la orden
-    const newOrderDetail = await this.ordersDetailRepository.save(orderDetail);
+        // Guardar el detalle de la orden
+        const newOrderDetail = await this.ordersDetailRepository.save(orderDetail);
 
-    // Asignar el detalle de la orden a la orden creada y guardar los cambios
-    createdOrder.orderDetail = newOrderDetail;
+        // Asignar el detalle de la orden a la orden creada y guardar los cambios
+        createdOrder.orderDetail = newOrderDetail;
 
-    // Guardar la orden con su detalle
-    return await this.ordersRepository.save(createdOrder);
-}
+        // Guardar la orden con su detalle
 
-    /**
-     * Obtiene todas las órdenes
-     * @returns Lista de todas las órdenes
-     */
+        return await this.ordersRepository.save(createdOrder);
+    }
+
+
     async getAllOrders(): Promise<Order[]> {
         return await this.ordersRepository.getAllOrders();
     }
 
-    /**
-     * Obtiene una orden por su ID
-     * @param id ID de la orden
-     * @returns La orden encontrada o null si no existe
-     */
     async getById(id: string): Promise<Order | null> {
         return await this.ordersRepository.getById(id);
     }

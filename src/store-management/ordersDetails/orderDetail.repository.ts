@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";;
 import { OrderDetail } from "./orderDetail.entity";
-import { NewOrderDetailDto } from "src/database/ordersDetails/newOrderDetails.dto";
+import { OrderDetailDto } from "src/database/ordersDetails/orderDetail.dto";
 
 @Injectable()
 export class OrderDetailRepository {
@@ -15,11 +15,11 @@ export class OrderDetailRepository {
       return await this.ordersRepository.find()
     }
 
-    async create(newOrderDetail: NewOrderDetailDto): Promise<OrderDetail> {
-      return await this.ordersRepository.create(newOrderDetail);;
+    async create(newOrderDetail: OrderDetail): Promise<OrderDetail> {
+      return await this.ordersRepository.create(newOrderDetail);
     }
 
-    async save(newOrderDetail: NewOrderDetailDto): Promise<OrderDetail> {
+    async save(newOrderDetail: OrderDetail): Promise<OrderDetail> {
       return await this.ordersRepository.save(newOrderDetail);;
     }
 

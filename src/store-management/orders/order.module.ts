@@ -7,12 +7,15 @@ import { OrderRepository } from './order.repository';
 import { UsersModule } from '../../user-management/users/user.module';
 import { OrderDetailModule } from '../ordersDetails/orderDetail.module';
 import { ProductsModule } from '../products/product.module';
+import { CartModule } from '../cart/cart.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Order]),
-        UsersModule,
+        forwardRef(() => UsersModule),
         ProductsModule,
+        OrderDetailModule,
+        CartModule,
         forwardRef(() => OrderDetailModule)
     ],
     controllers: [OrderController],

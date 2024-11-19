@@ -15,5 +15,6 @@ export class Order {
   user: User;
   
   @OneToOne(() => OrderDetail, (orderDetail) => orderDetail.order)
-  orderDetail: OrderDetail; 
+  @JoinColumn()
+  orderDetail: OrderDetail;
 }

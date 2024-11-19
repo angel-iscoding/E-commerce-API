@@ -12,7 +12,7 @@ export class OrderDetail {
 
   @OneToOne(() => Order, (order) => order.orderDetail)
   @JoinColumn()
-  order: Order;
+  order: Order; 
 
   @ManyToMany(() => Product)
   @JoinTable()

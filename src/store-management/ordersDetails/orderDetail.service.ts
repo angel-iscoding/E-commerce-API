@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { OrderDetailRepository } from './orderDetail.repository';
-import { OrderDetailDto } from 'src/database/ordersDetails/orderDetails.dto';
 import { OrderRepository } from '../orders/order.repository';
 import { ProductsRepository } from '../products/product.repository';
 import { OrderDetail } from './orderDetail.entity';
-import { NewOrderDetailDto } from 'src/database/ordersDetails/newOrderDetails.dto';
 
 @Injectable()
 export class OrderDetailService {   
@@ -14,19 +12,10 @@ export class OrderDetailService {
     private readonly productsRepository: ProductsRepository,
   ) {}
 
-  /**
-   * Obtiene todos los detalles de órdenes
-   * @returns Lista de todos los detalles de órdenes
-   */
   getAllOrdersDetail() {
     return this.orderDetailRepository.getAllOrdersDetail();
   }
 
-  /**
-   * Obtiene un detalle de orden por su ID
-   * @param id ID del detalle de orden
-   * @returns Detalle de orden encontrado
-   */
   getOrderDetailById(id: string) {
     return this.orderDetailRepository.getOrderDetailById(id);
   }
