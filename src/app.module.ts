@@ -8,9 +8,9 @@ import { CategoriesModule } from "./store-management/categories/category.module"
 import { CategoriesService } from "./store-management/categories/category.service";
 import { ProductsService } from "./store-management/products/product.service";
 import { OrderModule } from "./store-management/orders/order.module";
-import { OrderDetailModule } from "./store-management/ordersDetails/orderDetail.module";
+import { OrderDetailModule } from "./store-management/ordersDetails/orderDetail.module"; 
 import { AuthModule } from "./auth/auth.module";
-import { CloudModule } from "./user-management/cloud/cloud.module";
+import { CloudModule } from "./cloud/cloud.module";
 
 @Module({
     imports: [
@@ -38,13 +38,13 @@ import { CloudModule } from "./user-management/cloud/cloud.module";
 
 export class AppModule implements OnApplicationBootstrap {
     constructor(
-        private readonly categoriesService: CategoriesService,
+        /* private readonly categoriesService: CategoriesService, */
         private readonly productsService: ProductsService,
     ) {}
 
     async onApplicationBootstrap() {
         try {
-            await this.categoriesService.preloadCategories();
+           /*  await this.categoriesService.preloadCategories(); */
             await this.productsService.preloadProducts();
         } catch (error) {
             console.error('Error durante precarga de datos', error);

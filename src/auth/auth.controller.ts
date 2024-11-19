@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto } from 'src/database/sing-up.dto';
-import { LoginUserDto } from 'src/database/users/login-user.dto';
+import { SignInDto } from 'src/database/sing-in.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('auth')
@@ -27,7 +27,7 @@ export class AuthController {
     @ApiOperation({ summary: 'Iniciar sesión' })
     @ApiResponse({ status: 200, description: 'Inicio de sesión exitoso.' })
     @ApiResponse({ status: 400, description: 'Email o contraseña incorrectos.' })
-    async signIn(@Body() loginUserDto: LoginUserDto) {
+    async signIn(@Body() loginUserDto: SignInDto) {
         const { email, password } = loginUserDto;
         const token = await this.authService.signIn(email, password);
         if (!token) {

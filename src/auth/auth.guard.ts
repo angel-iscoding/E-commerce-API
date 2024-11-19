@@ -22,7 +22,7 @@ export class AuthGuard implements CanActivate {
 
     try {
       const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET});
-      request['user'] = payload;
+      request['user'] = payload; // Se le dan los permisos al usuario si el token es válido
       return true;
     } catch (error) {
       throw new UnauthorizedException('Token no válido');
