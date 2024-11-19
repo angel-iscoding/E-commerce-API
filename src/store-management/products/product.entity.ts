@@ -1,6 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, ManyToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
 import { Category } from 'src/store-management/categories/category.entity'; 
 import { OrderDetail } from 'src/store-management/ordersDetails/orderDetail.entity'; 
+import { Cart } from '../cart/cart.entity';
 
 @Entity()
 export class Product {
@@ -27,5 +28,10 @@ export class Product {
   category: Category;
 
   @ManyToMany(() => OrderDetail, (orderDetail) => orderDetail.products)
+  @JoinTable()
   orderDetails: OrderDetail[]; 
+
+  @ManyToMany(() => Cart, (cart) => cart.products)
+  @JoinTable()
+  cart: Cart[];
 }
