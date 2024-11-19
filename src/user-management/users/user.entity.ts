@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, OneToOne } from 'typeorm';
 import { Order } from '../../store-management/orders/order.entity'; 
+import { Cart } from 'src/store-management/cart/cart.entity';
 
 @Entity({ name: 'users' })
 export class User {
@@ -32,4 +33,7 @@ export class User {
 
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[]; 
+
+  @OneToOne(() => Cart, (cart) => cart.user)
+  cart: Cart;
 }

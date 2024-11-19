@@ -7,10 +7,8 @@ import { User } from "./user.entity";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from '../../auth/auth.module';
-
-/* const mockUserService = {
-    getUsers: () => 'Esto es un servicio mock de usuarios',
-}; */
+import { OrderModule } from '../../store-management/orders/order.module';
+import { CartModule } from '../../store-management/cart/cart.module';
 
 @Module({
     imports: [
@@ -19,7 +17,9 @@ import { AuthModule } from '../../auth/auth.module';
             secret: process.env.JWT_SECRET,
             signOptions: { expiresIn: '1h' },
         }),
-        forwardRef(() => AuthModule)
+        forwardRef(() => AuthModule),
+        forwardRef(() => OrderModule),
+        CartModule
     ],
     providers: [
         UsersService,

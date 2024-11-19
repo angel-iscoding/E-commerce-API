@@ -1,6 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, NotFoundException, Query, UseGuards, UseInterceptors, Req, BadRequestException } from '@nestjs/common';
 import { UsersService } from 'src/user-management/users/user.service';
-import { CreateUserDto } from 'src/database/users/createUser.dto';
 import { PaginationQueryDto } from 'src/database/pagination-query.dto'; 
 import { AuthGuard } from 'src/auth/auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
@@ -9,29 +8,26 @@ import { Role } from '../../config/role.enum';
 import { DateAdderInterceptor } from 'src/utils/interceptors/date-adder.interceptor';
 import { User } from './user.entity';
 import { IsUUID } from 'class-validator';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from '../../auth/auth.service';
-import { SignUpDto } from 'src/database/sing-up.dto';
+import { UserDto } from 'src/database/users/user.dto';
+// import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+// import { SignUpDto } from 'src/database/sing-up.dto';
 
 class UserIdParam {
   @IsUUID()
   id: string;
 }
 
-@ApiTags('users')
-@ApiBearerAuth()
 @Controller('users')
 export class UsersController {
     constructor(
         private readonly usersService: UsersService,
-        private readonly authService: AuthService
+        // private readonly authService: AuthService
     ) {}
 
     @Get()
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin)
-    @ApiOperation({ summary: 'Obtener todos los usuarios' })
-    @ApiResponse({ status: 200, description: 'Lista de usuarios obtenida exitosamente.' })
     async getAllUsers(@Query() paginationQuery: PaginationQueryDto): Promise<Omit<User[], 'password'>[]> {
         const { page, limit } = paginationQuery;
         return this.usersService.getAllUsers(page, limit);
@@ -39,9 +35,6 @@ export class UsersController {
 
     @Get(':id')
     @UseGuards(AuthGuard)
-    @ApiOperation({ summary: 'Obtener un usuario por ID' })
-    @ApiResponse({ status: 200, description: 'Usuario obtenido exitosamente.' })
-    @ApiResponse({ status: 404, description: 'Usuario no encontrado.' })
     async getUserById(@Param() params: UserIdParam): Promise<Omit<User, 'password'> | undefined> {
         const user = await this.usersService.getUserById(params.id);
         
@@ -52,19 +45,9 @@ export class UsersController {
 
     @Post('post')
     @UseInterceptors(DateAdderInterceptor)
-    async createUser(@Body() user: CreateUserDto, @Req() request): Promise<{ id: string}> {
+    async createUser(@Body() user: UserDto, @Req() request): Promise<{ id: string}> {
         try {
             const newUser: User = await this.usersService.createUser(user);
-            console.log(request.now, '| ¡Nuevo usuario creado!: \n');
-            console.log(
-                "Información del usuario:\n" +
-                "  Email: " + newUser.email + "\n" +
-                "  Nombre: " + newUser.name + "\n" +
-                "  Dirección: " + newUser.address + "\n" +
-                "  Teléfono: " + newUser.phone + "\n" +
-                "  País: " + newUser.country + "\n" +
-                "  Ciudad: " + newUser.city
-            );
             return { id: newUser.id };
         } catch (error) {
             throw new BadRequestException('No se pudo crear el usuario: ' + error.message);
@@ -73,7 +56,7 @@ export class UsersController {
 
     @Put('put/:id')
     @UseGuards(AuthGuard)
-    async updateUser(@Param() params: UserIdParam, @Body() userDto: CreateUserDto): Promise<{ id: string }> {
+    async updateUser(@Param() params: UserIdParam, @Body() userDto: UserDto): Promise<{ id: string }> {
         try {
             const updatedUser = await this.usersService.updateUser(params.id, userDto);
             return { id: updatedUser.id };

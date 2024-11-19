@@ -3,8 +3,6 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { User } from './user.entity';
 import { UserDto } from "src/database/users/user.dto";
-import { UpdateUserDto } from "src/database/users/updateUser.dto";
-import { CreateUserDto } from "src/database/users/createUser.dto";
 
 @Injectable()
 export class UsersRepository {
@@ -140,7 +138,7 @@ export class UsersRepository {
     return await this.usersRepository.findOne({ where: {email: email}}); 
   }
 
-  async createUser(user: CreateUserDto): Promise<User> {
+  async createUser(user: UserDto): Promise<User> {
     const thisUserExist = await this.findOneByEmail(user.email);
 
     if (thisUserExist) {
@@ -152,7 +150,7 @@ export class UsersRepository {
     return await this.usersRepository.save(newUser);
   }
 
-  async updateUser(id: string, updateUser: UpdateUserDto): Promise<User | null> {
+  async updateUser(id: string, updateUser: UserDto): Promise<User | null> {
     const userToUpdate = await this.getUserById(id);
     if (!userToUpdate) throw new NotFoundException('Usuario no encontrado');
 
@@ -163,7 +161,7 @@ export class UsersRepository {
 
   async deleteUser(id: string): Promise<void> {
     const userToDelete = await this.getUserById(id); 
-    if (!userToDelete) return undefined;
+    if (!userToDelete) return;
 
     await this.usersRepository.delete(userToDelete); 
   }
