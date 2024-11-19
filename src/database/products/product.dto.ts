@@ -26,9 +26,4 @@ export class ProductDto {
   @IsString()
   @IsOptional()
   imgUrl?: string;
-  
-  @ApiProperty({ example: 'Electrónicos', description: 'Categoría del producto' })
-  @IsString()
-  @IsNotEmpty()
-  category: string;
 }
