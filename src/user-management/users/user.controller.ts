@@ -26,15 +26,15 @@ export class UsersController {
     ) {}
 
     @Get()
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles(Role.Admin)
+    //@UseGuards(AuthGuard, RolesGuard)
+    //@Roles(Role.Admin)
     async getAllUsers(@Query() paginationQuery: PaginationQueryDto): Promise<Omit<User[], 'password'>[]> {
         const { page, limit } = paginationQuery;
         return this.usersService.getAllUsers(page, limit);
     }
 
     @Get(':id')
-    @UseGuards(AuthGuard)
+    //@UseGuards(AuthGuard)
     async getUserById(@Param() params: UserIdParam): Promise<Omit<User, 'password'> | undefined> {
         const user = await this.usersService.getUserById(params.id);
         
@@ -44,7 +44,7 @@ export class UsersController {
     }
 
     @Post('post')
-    @UseInterceptors(DateAdderInterceptor)
+    //@UseInterceptors(DateAdderInterceptor)
     async createUser(@Body() user: UserDto, @Req() request): Promise<{ id: string}> {
         try {
             const newUser: User = await this.usersService.createUser(user);
@@ -55,7 +55,7 @@ export class UsersController {
     }
 
     @Put('put/:id')
-    @UseGuards(AuthGuard)
+    //@UseGuards(AuthGuard)
     async updateUser(@Param() params: UserIdParam, @Body() userDto: UserDto): Promise<{ id: string }> {
         try {
             const updatedUser = await this.usersService.updateUser(params.id, userDto);
@@ -66,7 +66,7 @@ export class UsersController {
     }
 
     @Delete('delete/:id')
-    @UseGuards(AuthGuard)
+    //@UseGuards(AuthGuard)
     async deleteUser(@Param() params: UserIdParam): Promise<{ message: string }> {
         try {
             await this.usersService.deleteUser(params.id);

@@ -5,10 +5,8 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import typeOrmConfig from "./config/typeorm"
 import { CategoriesModule } from "./store-management/categories/category.module";
-import { CategoriesService } from "./store-management/categories/category.service";
 import { ProductsService } from "./store-management/products/product.service";
 import { OrderModule } from "./store-management/orders/order.module";
-import { OrderDetailModule } from "./store-management/ordersDetails/orderDetail.module"; 
 import { AuthModule } from "./auth/auth.module";
 import { CloudModule } from "./cloud/cloud.module";
 
@@ -29,7 +27,6 @@ import { CloudModule } from "./cloud/cloud.module";
         ProductsModule,
         CategoriesModule,
         OrderModule,
-        OrderDetailModule,
         CloudModule,
     ],
     controllers: [],
