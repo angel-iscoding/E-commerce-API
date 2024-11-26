@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinColumn } from 'typeorm';
 import { Product } from 'src/store-management/products/product.entity'; // Asegúrate de importar la entidad Product
 
 @Entity()
@@ -9,6 +9,7 @@ export class Category {
   @Column({ length: 50 })
   name: string;
 
-  @OneToMany(() => Product, (product) => product.category)
+  @ManyToMany(() => Product, (product) => product.category)
+  @JoinColumn()
   products: Product[]; 
 }

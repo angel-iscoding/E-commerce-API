@@ -1,6 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToOne, OneToMany } from 'typeorm';
 import { User } from 'src/user-management/users/user.entity'; 
-import { OrderDetail } from '../ordersDetails/orderDetail.entity'; 
+import { Product } from '../products/product.entity';
 
 @Entity()
 export class Order {
@@ -14,7 +14,7 @@ export class Order {
   @JoinColumn()
   user: User;
   
-  @OneToOne(() => OrderDetail, (orderDetail) => orderDetail.order)
+  @OneToMany(() => Product, (product) => product.order)
   @JoinColumn()
-  orderDetail: OrderDetail;
+  product: Product[];
 }

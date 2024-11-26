@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Order } from './order.entity';
 import { OrderRepository } from './order.repository';
 import { UsersModule } from '../../user-management/users/user.module';
-import { OrderDetailModule } from '../ordersDetails/orderDetail.module';
 import { ProductsModule } from '../products/product.module';
 import { CartModule } from '../cart/cart.module';
 
@@ -14,9 +13,7 @@ import { CartModule } from '../cart/cart.module';
         TypeOrmModule.forFeature([Order]),
         forwardRef(() => UsersModule),
         ProductsModule,
-        OrderDetailModule,
         CartModule,
-        forwardRef(() => OrderDetailModule)
     ],
     controllers: [OrderController],
     providers: [OrderService, OrderRepository],

@@ -3,16 +3,13 @@ import { OrderRepository } from './order.repository';
 import { Order } from './order.entity';
 import { UsersRepository } from '../../user-management/users/user.repository';
 import { ProductsRepository } from '../products/product.repository';
-import { OrderDetailRepository } from '../ordersDetails/orderDetail.repository';
 import { OrderDto } from 'src/database/orders/order.dto';
 import { CartService } from '../cart/cart.service';
-import { OrderDetail } from '../ordersDetails/orderDetail.entity';
 
 @Injectable()
 export class OrderService {
     constructor (
         private readonly ordersRepository: OrderRepository,
-        private readonly ordersDetailRepository: OrderDetailRepository, 
         private readonly usersRepository: UsersRepository,
         private readonly productsRepository: ProductsRepository,
         private readonly cartService: CartService,
@@ -43,15 +40,6 @@ export class OrderService {
         const createdOrder = await this.ordersRepository.save(newOrder);
 
         const totalPrice = existingProducts.reduce((sum, product) => sum + product.price, 0); 
-
-        // Crear el detalle de la orden
-        const orderDetail = new OrderDetail();
-
-        // Guardar el detalle de la orden
-        const newOrderDetail = await this.ordersDetailRepository.save(orderDetail);
-
-        // Asignar el detalle de la orden a la orden creada y guardar los cambios
-        createdOrder.orderDetail = newOrderDetail;
 
         // Guardar la orden con su detalle
 
