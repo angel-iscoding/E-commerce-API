@@ -141,9 +141,8 @@ export class UsersRepository {
   async createUser(user: UserDto): Promise<User> {
     const thisUserExist = await this.findOneByEmail(user.email);
 
-    if (thisUserExist) {
-      throw new InternalServerErrorException('El usuario ya fue registrado')
-    }
+    if (thisUserExist) throw new InternalServerErrorException('El usuario ya fue registrado')
+    
 
     const newUser = this.usersRepository.create(user); 
     

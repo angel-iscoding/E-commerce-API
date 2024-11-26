@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Product } from "./product.entity";
 import { Repository } from "typeorm";
@@ -107,7 +107,12 @@ export class ProductsRepository {
     }
 
     async createProduct(product: ProductDto): Promise<Product> {
-      const newProduct = await this.productsRepository.create(product); // Probablemente haya un problema
+      const thisProductExist = await this.findByName(product.name);
+
+      if (thisProductExist) throw new InternalServerErrorException('El producto ya fue creado');
+
+      const newProduct = this.productsRepository.create(product);
+      
       return await this.productsRepository.save(newProduct);
     }
     

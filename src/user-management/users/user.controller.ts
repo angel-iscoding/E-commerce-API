@@ -56,10 +56,10 @@ export class UsersController {
 
     @Put('put/:id')
     //@UseGuards(AuthGuard)
-    async updateUser(@Param() params: UserIdParam, @Body() userDto: UserDto): Promise<{ id: string }> {
+    async updateUser(@Param() params: UserIdParam, @Body() userDto: UserDto): Promise<{ message: string }> {
         try {
-            const updatedUser = await this.usersService.updateUser(params.id, userDto);
-            return { id: updatedUser.id };
+            const updatedUser: User = await this.usersService.updateUser(params.id, userDto);
+            return { message: updatedUser.id };
         } catch (error) {
             throw new BadRequestException('No se pudo actualizar el usuario: ' + error.message);
         }

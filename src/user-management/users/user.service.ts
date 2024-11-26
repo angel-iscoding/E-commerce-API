@@ -55,7 +55,7 @@ export class UsersService {
         newOrder.user = savedUser;
         await this.orderRepository.save(newOrder);
 
-        return savedUser
+        return savedUser;
     }
 
     async updateUser(id: string, updatedUser: UserDto):Promise<User> {

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { ProductsRepository } from "./product.repository";
 import { Product } from "./product.entity";
 import { ProductDto } from "src/database/products/product.dto";
