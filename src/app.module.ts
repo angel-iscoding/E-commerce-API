@@ -9,7 +9,6 @@ import { ProductsService } from "./store-management/products/product.service";
 import { OrderModule } from "./store-management/orders/order.module";
 import { AuthModule } from "./auth/auth.module";
 import { CloudModule } from "./cloud/cloud.module";
-
 @Module({
     imports: [
         ConfigModule.forRoot({

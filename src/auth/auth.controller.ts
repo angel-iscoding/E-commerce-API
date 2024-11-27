@@ -1,33 +1,31 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SignUpDto } from 'src/database/sing-up.dto';
-import { SignInDto } from 'src/database/sing-in.dto';
+import { SignUpDto } from 'src/database/auth/sign-up.dto';
+import { SignInDto } from 'src/database/auth/sign-in.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { User } from 'src/user-management/users/user.entity';
 
-@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
     @Post('signup')
     @HttpCode(HttpStatus.CREATED)
-    @ApiOperation({ summary: 'Registrar un nuevo usuario' })
-    @ApiResponse({ status: 201, description: 'Usuario registrado exitosamente.' })
-    @ApiResponse({ status: 400, description: 'Las contraseñas no coinciden o datos inválidos.' })
-    async signUp(@Body() signUpDto: SignUpDto) {
-        if (signUpDto.password !== signUpDto.confirmPassword) {
-            throw new BadRequestException('Las contraseñas no coinciden');
+    async signUp(@Body() signUpDto: SignUpDto): Promise<{ message: string }> {
+        try {
+            if (signUpDto.password !== signUpDto.confirmPassword) {
+                throw new BadRequestException('Las contraseñas no coinciden');
+            }
+            const user = await this.authService.signUp(signUpDto);
+            return { message: "Usuario creado con exito"}
+        } catch (error) {
+            throw new BadRequestException('No se pudo crear el usuario. Error: ' + error.message);
         }
-        const user = await this.authService.signUp(signUpDto);
-        return { ...user, password: undefined };
     }
 
     @Post('signin')
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Iniciar sesión' })
-    @ApiResponse({ status: 200, description: 'Inicio de sesión exitoso.' })
-    @ApiResponse({ status: 400, description: 'Email o contraseña incorrectos.' })
-    async signIn(@Body() loginUserDto: SignInDto) {
+    async signIn(@Body() loginUserDto: SignInDto) { //Agregar Promise
         const { email, password } = loginUserDto;
         const token = await this.authService.signIn(email, password);
         if (!token) {

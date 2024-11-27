@@ -11,7 +11,7 @@ const config = {
     password: 'admin',
     autoLoadEntities: true,
     synchronize: true,
-    dropSchema: false, // Cambia esto a false para evitar perder datos en cada reinicio
+    dropSchema: true, // Cambia esto a false para evitar perder datos en cada reinicio
     logging: false, // Cambia esto a true para ver los logs de SQL
     entities: ['dist/**/*.entity{.ts,.js}'],
     migrations: ['dist/migrations/*{.js,.ts}'],
