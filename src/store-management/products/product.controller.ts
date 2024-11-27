@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, Param, Post, Put, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ProductsService } from "./product.service";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ProductDto } from "src/database/products/product.dto";
@@ -8,6 +8,7 @@ import { RolesGuard } from "../../auth/roles.guard";
 // import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'; //Uso luego
 import { Product } from "./product.entity";
 import { IsUUID } from "class-validator";
+import { DateAdderInterceptor } from "src/utils/interceptors/date-adder.interceptor";
 
 class ProductIdParam {
   @IsUUID()
@@ -27,7 +28,8 @@ export class ProductsController {
   }
 
   @Post('post')
-  //@UseGuards(AuthGuard)
+  @UseGuards(AuthGuard)
+  @UseInterceptors(DateAdderInterceptor)
   async createProduct(@Body() product: ProductDto): Promise<{ message: string }> {
     try {
       const newProduct: Product = await this.productsService.createProduct(product);
@@ -47,7 +49,7 @@ export class ProductsController {
   }
 
   @Put('put/:id')
-  //@UseGuards(AuthGuard, RolesGuard)
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.Admin)
   async updateProduct(@Param() params: ProductIdParam, @Body() product: ProductDto): Promise<{ message: string }>{
     try {
@@ -59,7 +61,8 @@ export class ProductsController {
   }
 
   @Delete('delete/:id')
-  //@UseGuards(AuthGuard, RolesGuard)
+  @UseInterceptors(DateAdderInterceptor)
+  @UseGuards(AuthGuard, RolesGuard)
   async deleteProduct(@Param() params: ProductIdParam): Promise<{message: string}> {
     try {
       await this.productsService.deleteProduct(params.id);
