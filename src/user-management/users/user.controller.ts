@@ -22,19 +22,19 @@ class UserIdParam {
 export class UsersController {
     constructor(
         private readonly usersService: UsersService,
-        // private readonly authService: AuthService
+        private readonly authService: AuthService
     ) {}
 
     @Get()
-    //@UseGuards(AuthGuard, RolesGuard)
-    //@Roles(Role.Admin)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin)
     async getAllUsers(@Query() paginationQuery: PaginationQueryDto): Promise<Omit<User[], 'password'>[]> {
         const { page, limit } = paginationQuery;
         return this.usersService.getAllUsers(page, limit);
     }
 
     @Get(':id')
-    //@UseGuards(AuthGuard)
+    @UseGuards(AuthGuard)
     async getUserById(@Param() params: UserIdParam): Promise<Omit<User, 'password'> | undefined> {
         const user = await this.usersService.getUserById(params.id);
         
@@ -43,19 +43,8 @@ export class UsersController {
         return user;
     }
 
-    @Post('post')
-    //@UseInterceptors(DateAdderInterceptor)
-    async createUser(@Body() user: UserDto, @Req() request): Promise<{ id: string}> {
-        try {
-            const newUser: User = await this.usersService.createUser(user);
-            return { id: newUser.id };
-        } catch (error) {
-            throw new BadRequestException('No se pudo crear el usuario: ' + error.message);
-        }
-    }
-
     @Put('put/:id')
-    //@UseGuards(AuthGuard)
+    @UseGuards(AuthGuard)
     async updateUser(@Param() params: UserIdParam, @Body() userDto: UserDto): Promise<{ message: string }> {
         try {
             const updatedUser: User = await this.usersService.updateUser(params.id, userDto);
@@ -66,7 +55,8 @@ export class UsersController {
     }
 
     @Delete('delete/:id')
-    //@UseGuards(AuthGuard)
+    @UseGuards(AuthGuard)
+    @UseInterceptors(DateAdderInterceptor)
     async deleteUser(@Param() params: UserIdParam): Promise<{ message: string }> {
         try {
             await this.usersService.deleteUser(params.id);

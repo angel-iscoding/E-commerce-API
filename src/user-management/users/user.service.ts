@@ -39,12 +39,7 @@ export class UsersService {
         return this.usersRepository.findOneByEmail(email);
     }
 
-    async createUser(createUserDto: UserDto & { admin?: boolean }): Promise<User> {
-        const user: UserDto = {
-            ...createUserDto,
-            password: await bcrypt.hash(createUserDto.password, 10),
-        };
-
+    async createUser(user: UserDto): Promise<User> {
         const savedUser = await this.usersRepository.createUser(user);
 
         const newCart = new Cart();
