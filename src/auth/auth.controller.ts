@@ -3,7 +3,6 @@ import { AuthService } from './auth.service';
 import { SignUpDto } from 'src/database/auth/sign-up.dto';
 import { SignInDto } from 'src/database/auth/sign-in.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { User } from 'src/user-management/users/user.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -17,7 +16,7 @@ export class AuthController {
                 throw new BadRequestException('Las contraseñas no coinciden');
             }
             const user = await this.authService.signUp(signUpDto);
-            return { message: "Usuario creado con exito"}
+            return { message: user.id}
         } catch (error) {
             throw new BadRequestException('No se pudo crear el usuario. Error: ' + error.message);
         }
@@ -25,7 +24,7 @@ export class AuthController {
 
     @Post('signin')
     @HttpCode(HttpStatus.OK)
-    async signIn(@Body() loginUserDto: SignInDto) { //Agregar Promise
+    async signIn(@Body() loginUserDto: SignInDto): Promise<{ access_token: string }> { //Agregar Promise
         const { email, password } = loginUserDto;
         const token = await this.authService.signIn(email, password);
         if (!token) {
