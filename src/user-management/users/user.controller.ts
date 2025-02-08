@@ -10,7 +10,7 @@ import { User } from './user.entity';
 import { IsUUID } from 'class-validator';
 import { AuthService } from '../../auth/auth.service';
 import { UserDto } from 'src/database/users/user.dto';
-// import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 // import { SignUpDto } from 'src/database/sing-up.dto';
 
 class UserIdParam {
@@ -18,6 +18,8 @@ class UserIdParam {
   id: string;
 }
 
+@ApiTags('Users')
+@ApiBearerAuth()
 @Controller('users')
 export class UsersController {
     constructor(
@@ -26,6 +28,10 @@ export class UsersController {
     ) {}
 
     @Get()
+    @ApiOperation({ summary: 'Get all users' })
+    @ApiResponse({ status: 200, description: 'List of users retrieved successfully' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin)
     async getAllUsers(@Query() paginationQuery: PaginationQueryDto): Promise<Omit<User[], 'password'>[]> {
@@ -34,6 +40,10 @@ export class UsersController {
     }
 
     @Get(':id')
+    @ApiOperation({ summary: 'Get user by ID' })
+    @ApiResponse({ status: 200, description: 'User found successfully' })
+    @ApiResponse({ status: 404, description: 'User not found' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     @UseGuards(AuthGuard)
     async getUserById(@Param() params: UserIdParam): Promise<Omit<User, 'password'> | undefined> {
         const user = await this.usersService.getUserById(params.id);
@@ -44,6 +54,10 @@ export class UsersController {
     }
 
     @Put('put/:id')
+    @ApiOperation({ summary: 'Update user information' })
+    @ApiResponse({ status: 200, description: 'User updated successfully' })
+    @ApiResponse({ status: 400, description: 'Bad request - Invalid data' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     @UseGuards(AuthGuard)
     async updateUser(@Param() params: UserIdParam, @Body() userDto: UserDto): Promise<{ message: string }> {
         try {
@@ -55,6 +69,10 @@ export class UsersController {
     }
 
     @Delete('delete/:id')
+    @ApiOperation({ summary: 'Delete user' })
+    @ApiResponse({ status: 200, description: 'User deleted successfully' })
+    @ApiResponse({ status: 400, description: 'Bad request' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     @UseGuards(AuthGuard)
     @UseInterceptors(DateAdderInterceptor)
     async deleteUser(@Param() params: UserIdParam): Promise<{ message: string }> {
