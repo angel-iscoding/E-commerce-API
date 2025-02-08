@@ -4,12 +4,18 @@ import { CategoriesController } from "./category.controller";
 import { CategoriesRepository } from "./category.repository";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Category } from "./category.entity";
+import { JwtModule } from "@nestjs/jwt";
+import { AuthGuard } from "src/auth/auth.guard";
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Category])
+        TypeOrmModule.forFeature([Category]),
+        JwtModule.register({
+            secret: process.env.JTW_SECRET,
+            signOptions: { expiresIn: '1h' },
+        }),
     ],
-    providers: [CategoriesService, CategoriesRepository],
+    providers: [CategoriesService, CategoriesRepository, AuthGuard],
     controllers: [CategoriesController],
     exports: [CategoriesService, CategoriesRepository]
 })

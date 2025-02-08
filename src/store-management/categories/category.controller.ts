@@ -1,21 +1,53 @@
-import { Controller, Get, Post, Body, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Get, Post, Body, InternalServerErrorException, Param, Put, Delete, UseGuards } from '@nestjs/common';
+import { Category } from './category.entity';
 import { CategoriesService } from './category.service';
 import { CreateCategoryDto } from 'src/database/categories/createCategoryDto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Role } from 'src/config/role.enum';
+import { Roles } from 'src/config/role.decorator';
 
+@ApiTags('Categories')
+@ApiBearerAuth()
 @Controller('categories')
 export class CategoriesController {
   constructor(private categoriesService: CategoriesService) {}
 
   @Get()
-  async getCategories() {
+  @ApiOperation({ summary: 'Get all categories' })
+  @ApiResponse({ status: 200, description: 'List of categories retrieved successfully' })
+  async getAllCategories(): Promise<Category[]> {
     return await this.categoriesService.getCategories();
   }
 
-  @Post('post')
-  async postCategories(@Body() category: CreateCategoryDto) {
-    if(await this.categoriesService.thisCategoryExist(category.name)) throw new InternalServerErrorException('Esta categoria ya existe')
-    return await this.categoriesService.createCategory(category)
+  @Get(':id')
+  @ApiOperation({ summary: 'Get category by ID' })
+  @ApiResponse({ status: 200, description: 'Category found successfully' })
+  @ApiResponse({ status: 404, description: 'Category not found' })
+  async getCategoryById(@Param('id') id: string): Promise<Category> {
+    return await this.categoriesService.getById(id);
+  }
+
+  @Post()
+  @ApiOperation({ summary: 'Create new category' })
+  @ApiResponse({ status: 201, description: 'Category created successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request - Invalid data' })
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Admin)
+  async createCategory(@Body() createCategoryDto: CreateCategoryDto): Promise<Category> {
+    if(await this.categoriesService.thisCategoryExist(createCategoryDto.name)) throw new InternalServerErrorException('Esta categoria ya existe')
+    return await this.categoriesService.createCategory(createCategoryDto)
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete category' })
+  @ApiResponse({ status: 200, description: 'Category deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Category not found' })
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Admin)
+  async deleteCategory(@Param('id') id: string): Promise<void> {
+    await this.categoriesService.deleteCategory(id);
   }
 
   @Post('seeder')

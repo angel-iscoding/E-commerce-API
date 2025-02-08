@@ -17,6 +17,10 @@ export class CategoriesService {
     return await this.categoriesRepository.createCategory(category);
   }
 
+  async getById (id): Promise<Category | undefined> {
+    return await this.categoriesRepository.findById(id);
+  }
+
   async findByName (name: string): Promise<Category | undefined> {
     return await this.categoriesRepository.findByName(name);
   }
@@ -24,6 +28,10 @@ export class CategoriesService {
   async thisCategoryExist(name: string): Promise<boolean> {
     if (await this.categoriesRepository.findByName(name)) return Promise.resolve(true); 
     return Promise.resolve(false);
+  }
+
+  async deleteCategory (id: string): Promise<void> {
+    await this.categoriesRepository.deleteCategory(id);
   }
 
   async preloadCategories (): Promise<void> {
