@@ -4,11 +4,11 @@ import { DataSource, DataSourceOptions, Migration } from "typeorm";
 
 const config = {
     type: 'postgres',
-    database: process.env.DATABASE_NAME || 'demodb',
-    host: process.env.DATABASE_HOST || 'db',
-    port: Number(process.env.DATABASE_PORT) || 5432,
-    username: process.env.DATABASE_USER || 'postgres',
-    password: process.env.DATABASE_PASSWORD || 'admin',
+    database: process.env.DB_NAME || 'demodb',
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT) || 5432,
+    username: process.env.DB_USERNAME || 'postgres',
+    password: process.env.DB_PASSWORD || 'admin',
     autoLoadEntities: true,
     synchronize: true,
     dropSchema: true, // Cambia esto a false para evitar perder datos en cada reinicio
