@@ -12,20 +12,34 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:alpine
+    container_name: ecommerce-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
   app:
     build: .
     container_name: ecommerce-api
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
-      DATABASE_HOST: db
-      DATABASE_PORT: 5432
-      DATABASE_USER: myuser
-      DATABASE_PASSWORD: mypassword
-      DATABASE_NAME: mydatabase
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: myuser
+      DB_PASSWORD: mypassword
+      DB_NAME: mydatabase
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       - db
+      - redis
     volumes:
       - .:/app
+
 volumes:
   postgres-data:
+  redis-data:
