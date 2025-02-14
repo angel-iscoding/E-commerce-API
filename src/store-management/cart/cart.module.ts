@@ -5,15 +5,26 @@ import { CartController } from "./cart.controller";
 import { CartRepository } from "./cart.repository";
 import { CartService } from "./cart.service";
 import { UsersModule } from "src/user-management/users/user.module";
+import { ProductsModule } from "../products/product.module";
+import { CartRedisService } from "./cart-redis.service";
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Cart]),
-        forwardRef(() => UsersModule),
+        ProductsModule,
+        forwardRef(() => UsersModule)
     ],
-    providers: [CartService, CartRepository],
+    providers: [
+        CartService, 
+        CartRepository,
+        CartRedisService
+    ],
     controllers: [CartController],
-    exports: [CartService, CartRepository],
+    exports: [
+        CartService, 
+        CartRepository,
+        //Add TypeOrmModule in case of error?
+    ],
 })
 
 export class CartModule {}

@@ -9,6 +9,7 @@ import { ProductsService } from "./store-management/products/product.service";
 import { OrderModule } from "./store-management/orders/order.module";
 import { AuthModule } from "./auth/auth.module";
 import { CloudModule } from "./cloud/cloud.module";
+import { CartModule } from "./store-management/cart/cart.module";
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -21,12 +22,13 @@ import { CloudModule } from "./cloud/cloud.module";
             useFactory: (ConfigService: ConfigService) =>
                 ConfigService.get('typeorm')
         }),
+        CartModule,
         UsersModule,
         AuthModule,
         ProductsModule,
         CategoriesModule,
         OrderModule,
-        CloudModule,
+        CloudModule
     ],
     controllers: [],
     providers: [],
