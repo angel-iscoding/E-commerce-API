@@ -10,10 +10,15 @@ import { User } from './user.entity';
 import { IsUUID } from 'class-validator';
 import { AuthService } from '../../auth/auth.service';
 import { UserDto } from 'src/database/users/user.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 // import { SignUpDto } from 'src/database/sing-up.dto';
 
 class UserIdParam {
+  @ApiProperty({ 
+    description: 'UUID del usuario',
+    example: '123e4567-e89b-12d3-a456-426614174000'
+  })
   @IsUUID()
   id: string;
 }
@@ -23,15 +28,39 @@ class UserIdParam {
 @Controller('users')
 export class UsersController {
     constructor(
-        private readonly usersService: UsersService,
-        private readonly authService: AuthService
+        private readonly usersService: UsersService
     ) {}
 
     @Get()
-    @ApiOperation({ summary: 'Get all users' })
-    @ApiResponse({ status: 200, description: 'List of users retrieved successfully' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
-    @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
+    @ApiOperation({ 
+        summary: 'Obtener todos los usuarios',
+        description: 'Retorna una lista paginada de usuarios. Solo accesible por administradores.'
+    })
+    @ApiQuery({
+        name: 'page',
+        required: false,
+        description: 'Número de página para la paginación',
+        type: Number
+    })
+    @ApiQuery({
+        name: 'limit',
+        required: false,
+        description: 'Cantidad de elementos por página',
+        type: Number
+    })
+    @ApiResponse({ 
+        status: 200, 
+        description: 'Lista de usuarios obtenida exitosamente',
+        type: [User]
+    })
+    @ApiResponse({ 
+        status: 401, 
+        description: 'No autorizado - Token no válido o expirado' 
+    })
+    @ApiResponse({ 
+        status: 403, 
+        description: 'Prohibido - Se requieren permisos de administrador' 
+    })
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin)
     async getAllUsers(@Query() paginationQuery: PaginationQueryDto): Promise<Omit<User[], 'password'>[]> {
@@ -40,10 +69,28 @@ export class UsersController {
     }
 
     @Get(':id')
-    @ApiOperation({ summary: 'Get user by ID' })
-    @ApiResponse({ status: 200, description: 'User found successfully' })
-    @ApiResponse({ status: 404, description: 'User not found' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiOperation({ 
+        summary: 'Obtener usuario por ID',
+        description: 'Retorna la información de un usuario específico excluyendo la contraseña'
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'UUID del usuario a buscar',
+        type: String
+    })
+    @ApiResponse({ 
+        status: 200, 
+        description: 'Usuario encontrado exitosamente',
+        type: User
+    })
+    @ApiResponse({ 
+        status: 404, 
+        description: 'Usuario no encontrado' 
+    })
+    @ApiResponse({ 
+        status: 401, 
+        description: 'No autorizado - Token no válido o expirado' 
+    })
     @UseGuards(AuthGuard)
     async getUserById(@Param() params: UserIdParam): Promise<Omit<User, 'password'> | undefined> {
         const user = await this.usersService.getUserById(params.id);
@@ -54,10 +101,39 @@ export class UsersController {
     }
 
     @Put('put/:id')
-    @ApiOperation({ summary: 'Update user information' })
-    @ApiResponse({ status: 200, description: 'User updated successfully' })
-    @ApiResponse({ status: 400, description: 'Bad request - Invalid data' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiOperation({ 
+        summary: 'Actualizar usuario',
+        description: 'Actualiza la información de un usuario existente'
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'UUID del usuario a actualizar'
+    })
+    @ApiBody({ 
+        type: UserDto,
+        description: 'Datos actualizados del usuario'
+    })
+    @ApiResponse({ 
+        status: 200, 
+        description: 'Usuario actualizado exitosamente',
+        schema: {
+            type: 'object',
+            properties: {
+                message: {
+                    type: 'string',
+                    example: '123e4567-e89b-12d3-a456-426614174000'
+                }
+            }
+        }
+    })
+    @ApiResponse({ 
+        status: 400, 
+        description: 'Solicitud inválida - Datos incorrectos' 
+    })
+    @ApiResponse({ 
+        status: 401, 
+        description: 'No autorizado' 
+    })
     @UseGuards(AuthGuard)
     async updateUser(@Param() params: UserIdParam, @Body() userDto: UserDto): Promise<{ message: string }> {
         try {
@@ -69,10 +145,35 @@ export class UsersController {
     }
 
     @Delete('delete/:id')
-    @ApiOperation({ summary: 'Delete user' })
-    @ApiResponse({ status: 200, description: 'User deleted successfully' })
-    @ApiResponse({ status: 400, description: 'Bad request' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiOperation({ 
+        summary: 'Eliminar usuario',
+        description: 'Elimina permanentemente un usuario del sistema'
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'UUID del usuario a eliminar'
+    })
+    @ApiResponse({ 
+        status: 200, 
+        description: 'Usuario eliminado exitosamente',
+        schema: {
+            type: 'object',
+            properties: {
+                message: {
+                    type: 'string',
+                    example: 'Usuario eliminado correctamente'
+                }
+            }
+        }
+    })
+    @ApiResponse({ 
+        status: 400, 
+        description: 'Error al eliminar el usuario' 
+    })
+    @ApiResponse({ 
+        status: 401, 
+        description: 'No autorizado' 
+    })
     @UseGuards(AuthGuard)
     @UseInterceptors(DateAdderInterceptor)
     async deleteUser(@Param() params: UserIdParam): Promise<{ message: string }> {
