@@ -10,6 +10,9 @@ export class Order {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   date: Date;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  price: number;
+
   @ManyToOne(() => User, (user) => user.orders)
   @JoinColumn()
   user: User;

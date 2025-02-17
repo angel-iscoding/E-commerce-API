@@ -41,6 +41,8 @@ export class OrderService {
 
         const totalPrice = existingProducts.reduce((sum, product) => sum + product.price, 0); 
 
+        createdOrder.price = totalPrice;
+
         // Guardar la orden con su detalle
 
         return await this.ordersRepository.save(createdOrder);

@@ -1,4 +1,4 @@
-import { IsArray, IsDate, IsNotEmpty, IsString, IsUUID } from "class-validator";
+import { IsArray, IsDate, IsNotEmpty, IsNumber, IsString, IsUUID } from "class-validator";
 import { ApiProperty } from '@nestjs/swagger';
 
 export class OrderDto {
@@ -9,6 +9,10 @@ export class OrderDto {
     @IsUUID()
     @IsNotEmpty()
     user: string;
+
+    @IsNumber()
+    @IsNotEmpty()
+    price: number;
 
     @IsUUID()
     @IsNotEmpty()
