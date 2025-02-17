@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { Product } from '../products/product.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class CartRedisService implements OnModuleInit {
@@ -45,34 +46,48 @@ export class CartRedisService implements OnModuleInit {
         }
     }
 
-    private getCartKey(userId: string): string {
-        return `cart:${userId}`;
+    private getCartKey(cartId: string): string {
+        return `cart:${cartId}`;
     }
 
-    async addToTemporaryCart(userId: string, products: Product[]): Promise<void> {
-        const cartKey = this.getCartKey(userId);
+    async createTemporaryCart(): Promise<string> {
+        const cartId = uuidv4();
+        await this.redis.set(
+            this.getCartKey(cartId),
+            JSON.stringify([]),
+            'EX',
+            this.EXPIRATION_TIME
+        );
+        return cartId;
+    }
+
+    async addToTemporaryCart(cartId: string, products: Product[]): Promise<void> {
+        const cartKey = this.getCartKey(cartId);
+        const existingCart = await this.getTemporaryCart(cartId);
         
-        // Guardar productos en Redis
+        // Combinar productos existentes con nuevos
+        const updatedProducts = [...existingCart, ...products];
+        
         await this.redis.set(
             cartKey,
-            JSON.stringify(products),
+            JSON.stringify(updatedProducts),
             'EX',
             this.EXPIRATION_TIME
         );
     }
 
-    async getTemporaryCart(userId: string): Promise<Product[]> {
-        const cartKey = this.getCartKey(userId);
+    async getTemporaryCart(cartId: string): Promise<Product[]> {
+        const cartKey = this.getCartKey(cartId);
         const cart = await this.redis.get(cartKey);
         return cart ? JSON.parse(cart) : [];
     }
 
-    async removeTemporaryCart(userId: string): Promise<void> {
-        const cartKey = this.getCartKey(userId);
+    async removeTemporaryCart(cartId: string): Promise<void> {
+        const cartKey = this.getCartKey(cartId);
         await this.redis.del(cartKey);
     }
 
-    async updateTemporaryCart(userId: string, products: Product[]): Promise<void> {
-        await this.addToTemporaryCart(userId, products);
+    async updateTemporaryCart(cartId: string, products: Product[]): Promise<void> {
+        await this.addToTemporaryCart(cartId, products);
     }
 }

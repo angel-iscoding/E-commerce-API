@@ -5,6 +5,7 @@ import { UsersRepository } from 'src/user-management/users/user.repository';
 import { ProductsRepository } from '../products/product.repository';
 import { Product } from '../products/product.entity';
 import { CartRedisService } from './cart-redis.service';
+import { User } from 'src/user-management/users/user.entity';
 
 @Injectable()
 export class CartService {
@@ -17,6 +18,11 @@ export class CartService {
 
     async getAllCart(): Promise<Cart[]> {
         return await this.cartRepository.getAllCart();
+    }
+
+    async thisUserExist (userId: string): Promise<boolean> {
+        const user = await this.userRepository.getUserById(userId);
+        return user ? true : false  
     }
 
     async getCart(userId: string, isAuthenticated: boolean): Promise<any> {

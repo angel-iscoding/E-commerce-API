@@ -1,8 +1,10 @@
-import { BadRequestException, Body, Controller, Delete, Get, Post, Put, UseGuards, Request } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Post, Put, UseGuards, Request, Param } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { ApiOperation, ApiTags, ApiResponse, ApiBody, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { ApiProperty } from '@nestjs/swagger';
+import { v4 as uuidv4 } from 'uuid';
+import { Cart } from './cart.entity';
 
 // DTOs para Swagger
 class AddToCartDto {
@@ -63,57 +65,41 @@ export class CartController {
     async addToCart(
         @Body() data: AddToCartDto,
         @Request() req
-    ): Promise<{ message: string }> {
-        try {
-            const isAuthenticated = req.user !== undefined;
-            await this.cartService.addProductToCart(
-                data.userId, 
-                data.productIds, 
-                isAuthenticated
-            );
-            return { 
-                message: isAuthenticated 
-                    ? 'Productos agregados al carrito permanente' 
-                    : 'Productos agregados al carrito temporal'
-            };
-        } catch (error) {
-            throw new BadRequestException('Error al agregar productos: ' + error.message);
-        }
+    ): Promise<{ message: string, cartId?: string }> {
+        const isAuthenticated = req.user !== undefined;
+        const userId = isAuthenticated ? req.user.id : (data.userId || uuidv4());
+
+        await this.cartService.addProductToCart(
+            userId, 
+            data.productIds, 
+            isAuthenticated
+        );
+
+        return { 
+            message: 'Productos agregados al carrito',
+            cartId: !isAuthenticated ? userId : undefined // Solo devolver ID para usuarios no autenticados
+        };
     }
 
     @Get()
     @ApiOperation({ 
         summary: 'Obtener carrito',
-        description: 'Obtiene el carrito del usuario. Si está autenticado, de DB, si no, de Redis.'
+        description: 'Obtiene el carrito. Para usuarios no autenticados, genera un ID temporal si no existe.'
     })
-    @ApiQuery({ 
-        name: 'temporaryUserId', 
-        required: false, 
-        description: 'ID temporal para usuarios no autenticados'
-    })
-    @ApiResponse({ 
-        status: 200, 
-        description: 'Carrito obtenido exitosamente',
-        schema: {
-            type: 'object',
-            properties: {
-                items: {
-                    type: 'array',
-                    items: {
-                        type: 'object',
-                        properties: {
-                            productId: { type: 'string' },
-                            quantity: { type: 'number' }
-                        }
-                    }
-                }
-            }
+    async getCart(@Param() idUser: string): Promise<any> {
+        const isAuthenticated = await this.cartService.thisUserExist(idUser);
+        let userId: string;
+
+        if (!isAuthenticated) {
+            userId = uuidv4();
         }
-    })
-    async getCart(@Request() req): Promise<any> {
-        const isAuthenticated = req.user !== undefined;
-        const userId = isAuthenticated ? req.user.id : req.query.temporaryUserId;
-        return await this.cartService.getCart(userId, isAuthenticated);
+
+        const cart: Cart = await this.cartService.getCart(userId, isAuthenticated);
+        
+        return {
+            cartId: userId, // Devolver el ID para que el cliente lo guarde
+            items: cart.products
+        };
     }
 
     @Post('migrate')
