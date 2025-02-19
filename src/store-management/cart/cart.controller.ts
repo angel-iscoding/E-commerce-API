@@ -5,35 +5,9 @@ import { ApiOperation, ApiTags, ApiResponse, ApiBody, ApiQuery, ApiBearerAuth } 
 import { ApiProperty } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import { Cart } from './cart.entity';
-
-// DTOs para Swagger
-class AddToCartDto {
-    @ApiProperty({ description: 'ID del usuario o ID temporal', example: 'user123' })
-    userId: string;
-
-    @ApiProperty({ 
-        description: 'Array de IDs de productos', 
-        example: ['product1', 'product2'],
-        type: [String]
-    })
-    productIds: string[];
-}
-
-class RemoveFromCartDto {
-    @ApiProperty({ description: 'ID del usuario o ID temporal', example: 'user123' })
-    userId: string;
-
-    @ApiProperty({ description: 'ID del producto a remover', example: 'product123' })
-    productId: string;
-}
-
-class MigrateCartDto {
-    @ApiProperty({ 
-        description: 'ID temporal del usuario no autenticado', 
-        example: 'temp123' 
-    })
-    temporaryUserId: string;
-}
+import { cartDto } from 'src/database/cart/cartDto.dto';
+import { MigrateCartDto } from 'src/database/cart/migrateCartDto.dto';
+import { RemoveFromCartDto } from 'src/database/cart/removeFromCartDto.dto';
 
 @ApiTags('Cart')
 @Controller('cart')
@@ -42,12 +16,12 @@ export class CartController {
         private readonly cartService: CartService,
     ) {}
 
-    @Put('add')
+    @Post('add')
     @ApiOperation({ 
         summary: 'Agregar productos al carrito',
         description: 'Agrega productos al carrito. Si el usuario está autenticado, se guarda en DB, si no, en Redis.'
     })
-    @ApiBody({ type: AddToCartDto })
+    @ApiBody({ type: cartDto })
     @ApiResponse({ 
         status: 200, 
         description: 'Productos agregados exitosamente',
@@ -57,48 +31,58 @@ export class CartController {
                 message: {
                     type: 'string',
                     example: 'Productos agregados al carrito'
+                },
+                userId: {
+                    type: 'string',
+                    example: 'user123'
+                },
+                isAuthenticated: {
+                    type: 'boolean',
+                    example: true
                 }
             }
         }
     })
     @ApiResponse({ status: 400, description: 'Error al agregar productos' })
     async addToCart(
-        @Body() data: AddToCartDto,
+        @Body() data: cartDto,
         @Request() req
-    ): Promise<{ message: string, cartId?: string }> {
+    ): Promise<{ message: string, userId: string, isAuthenticated: boolean }> {
         const isAuthenticated = req.user !== undefined;
-        const userId = isAuthenticated ? req.user.id : (data.userId || uuidv4());
+        const userId = isAuthenticated ? req.user.id : (uuidv4());
+
+        console.log(userId);
 
         await this.cartService.addProductToCart(
             userId, 
-            data.productIds, 
+            data.products, 
             isAuthenticated
-        );
+        );    
 
         return { 
             message: 'Productos agregados al carrito',
-            cartId: !isAuthenticated ? userId : undefined // Solo devolver ID para usuarios no autenticados
+            userId: userId,
+            isAuthenticated: isAuthenticated
         };
     }
 
-    @Get()
+    @Get(':id')
     @ApiOperation({ 
         summary: 'Obtener carrito',
         description: 'Obtiene el carrito. Para usuarios no autenticados, genera un ID temporal si no existe.'
     })
-    async getCart(@Param() idUser: string): Promise<any> {
-        const isAuthenticated = await this.cartService.thisUserExist(idUser);
-        let userId: string;
-
-        if (!isAuthenticated) {
-            userId = uuidv4();
-        }
-
-        const cart: Cart = await this.cartService.getCart(userId, isAuthenticated);
+    async getCart(
+        @Param('id') idUser: string,
+        @Request() req
+    ): Promise<any> {
+        const isAuthenticated = req.user !== undefined;
+        
+        const cart: Cart = await this.cartService.getCart(idUser, isAuthenticated);
         
         return {
-            cartId: userId, // Devolver el ID para que el cliente lo guarde
-            items: cart.products
+            cartId: idUser, 
+            items: cart.products,
+            price: cart.price
         };
     }
 

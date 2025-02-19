@@ -25,14 +25,13 @@ export class CartService {
         return user ? true : false  
     }
 
-    async getCart(userId: string, isAuthenticated: boolean): Promise<any> {
-        if (isAuthenticated) {
-            // Obtener carrito de la base de datos
-            return await this.cartRepository.getCartByUserId(userId);
-        } else {
-            // Obtener carrito temporal de Redis
-            return await this.cartRedisService.getTemporaryCart(userId);
-        }
+    async getCart(userId: string, isAuthenticated: boolean): Promise<Cart> {
+        if (isAuthenticated) return await this.cartRepository.getCartByUserId(userId); 
+        const cartTemporaly = await this.cartRedisService.getTemporaryCart(userId);
+
+        if (!cartTemporaly) throw new NotFoundException('Carrito no encontrado');
+
+        return cartTemporaly
     }
 
     async getCartByUser(id: string): Promise<Cart | undefined> {
@@ -51,14 +50,17 @@ export class CartService {
             })
         );
 
+        console.log(products);
+        
+
         if (isAuthenticated) {
             // Usuario autenticado: solo guardar en DB
             await this.addProductToUserCart(userId, productId);
         } else {
             // Usuario no autenticado: solo guardar en Redis
             const temporaryCart = await this.cartRedisService.getTemporaryCart(userId);
-            const updatedCart = [...temporaryCart, ...products];
-            await this.cartRedisService.updateTemporaryCart(userId, updatedCart);
+            const updatedProducts = [...temporaryCart.products, ...products];
+            await this.cartRedisService.updateTemporaryCart(userId, updatedProducts);
         }
     }
 
@@ -127,8 +129,8 @@ export class CartService {
         // Cuando un usuario inicia sesión, migrar su carrito temporal a la DB
         const temporaryCart = await this.cartRedisService.getTemporaryCart(temporaryUserId);
         
-        if (temporaryCart.length > 0) {
-            const productIds = temporaryCart.map(product => product.id);
+        if (temporaryCart.products.length > 0) {
+            const productIds = temporaryCart.products.map(product => product.id);
             await this.addProductToUserCart(authenticatedUserId, productIds);
             // Limpiar el carrito temporal
             await this.cartRedisService.removeTemporaryCart(temporaryUserId);
@@ -142,8 +144,8 @@ export class CartService {
         } else {
             // Remover de Redis
             const temporaryCart = await this.cartRedisService.getTemporaryCart(userId);
-            const updatedCart = temporaryCart.filter(product => product.id !== productId);
-            await this.cartRedisService.updateTemporaryCart(userId, updatedCart);
+            const updatedProducts = temporaryCart.products.filter(product => product.id !== productId);
+            await this.cartRedisService.updateTemporaryCart(userId, updatedProducts);
         }
     }
 
