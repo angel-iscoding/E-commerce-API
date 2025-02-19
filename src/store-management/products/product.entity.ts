@@ -31,7 +31,6 @@ export class Product {
   @JoinColumn()
   order: Order;
 
-  @ManyToOne(() => Cart, (cart) => cart.products)
-  @JoinColumn()
+  @ManyToMany(() => Cart, (cart) => cart.products)
   cart: Cart[];
 }

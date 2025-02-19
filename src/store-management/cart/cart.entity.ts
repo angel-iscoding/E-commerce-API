@@ -1,20 +1,20 @@
 import { User } from 'src/user-management/users/user.entity';
-import { Entity, Column, PrimaryGeneratedColumn, JoinColumn, OneToOne, OneToMany, JoinTable } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, JoinColumn, OneToOne, OneToMany, JoinTable, PrimaryColumn, ManyToMany } from 'typeorm';
 import { Product } from '../products/product.entity';
 
 @Entity()
 export class Cart {
-    @PrimaryGeneratedColumn('uuid')
+    @PrimaryColumn()
     id: string;
 
     @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
     price: number
 
-    @OneToOne(() => User, (user) => user.cart)
-    @JoinColumn()
+    @OneToOne(() => User, (user) => user.cart, { onDelete: 'CASCADE'})
+    @JoinColumn({name: 'id'})
     user: User;
 
-    @OneToMany (() => Product, (product) => product.cart)
-    @JoinTable()
+    @ManyToMany (() => Product, (product) => product.cart)
+    @JoinTable({ name: 'cart_products' })
     products: Product[];
 }
