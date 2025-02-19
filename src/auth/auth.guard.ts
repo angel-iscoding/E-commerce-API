@@ -1,6 +1,6 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -8,24 +8,32 @@ export class AuthGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
+    const response = context.switchToHttp().getResponse<Response>();
     const authorizationHeader = request.headers['authorization'];
 
-    if (!authorizationHeader) {
-      throw new UnauthorizedException('Token no proporcionado');
+    if (authorizationHeader) {
+      const [authType, token] = authorizationHeader.split(' ');
+
+      if (authType === 'Bearer' && token) {
+        try {
+          const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
+          request['user'] = payload; // Si el token es válido, asignamos el usuario
+          return true;
+        } catch (error) {
+          response.status(401).json({ message: 'Token no válido' });
+          return false;
+        }
+      }
     }
 
-    const [authType, token] = authorizationHeader.split(' ');
-
-    if (authType !== 'Bearer' || !token) {
-      throw new UnauthorizedException('Token no válido');
-    }
-
-    try {
-      const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET});
-      request['user'] = payload; // Se le dan los permisos al usuario si el token es válido
+    if (request.url.startsWith('/cart')) {
+      console.log('No autentificado');
+      
+      request['user'] = undefined;
       return true;
-    } catch (error) {
-      throw new UnauthorizedException('Token no válido');
     }
+
+    response.status(401).json({ message: 'Acceso no autorizado' });
+    return false;
   }
 }

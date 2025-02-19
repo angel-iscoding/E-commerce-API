@@ -32,8 +32,8 @@ export class AuthService {
             throw new BadRequestException('Email o contraseña incorrectos');
         }
 
-        const payload = { email: user.email, sub: user.id, roles: user.admin ? [Role.Admin] : [Role.User] };
-        
+        const payload = { email: user.email, id: user.id, roles: user.admin ? [Role.Admin] : [Role.User] };
+    
         return this.jwtService.sign(payload, { secret: `${process.env.JWT_SECRET}` });
     }
 }
