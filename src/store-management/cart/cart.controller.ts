@@ -8,6 +8,7 @@ import { Cart } from './cart.entity';
 import { cartDto } from 'src/database/cart/cartDto.dto';
 import { MigrateCartDto } from 'src/database/cart/migrateCartDto.dto';
 import { RemoveFromCartDto } from 'src/database/cart/removeFromCartDto.dto';
+import { UserIdParam } from 'src/database/users/userIdParam.dto';
 
 @ApiTags('Cart')
 @Controller('cart')
@@ -49,12 +50,9 @@ export class CartController {
         @Body() data: cartDto,
         @Request() req
     ): Promise<{ message: string, userId: string, isAuthenticated: boolean }> {
-        const isAuthenticated = req.user !== undefined;
-        console.log('Finally exits', req.user);
+        const isAuthenticated = req.user ? true : false;
         
         const userId = isAuthenticated ? req.user.id : (uuidv4());
-
-        console.log(userId);
 
         await this.cartService.addProductToCart(
             userId, 
@@ -70,20 +68,24 @@ export class CartController {
     }
 
     @Get(':id')
+    @UseGuards(AuthGuard)
     @ApiOperation({ 
         summary: 'Obtener carrito',
         description: 'Obtiene el carrito. Para usuarios no autenticados, genera un ID temporal si no existe.'
     })
     async getCart(
-        @Param('id') idUser: string,
+        @Param() idUser: UserIdParam,
         @Request() req
     ): Promise<any> {
-        const isAuthenticated = req.user !== undefined;
+        const isAuthenticated = req.user ? true : false;
+
+        console.log(isAuthenticated, req.user);
         
-        const cart: Cart = await this.cartService.getCart(idUser, isAuthenticated);
+        
+        const cart: Cart = await this.cartService.getCart(idUser.id, isAuthenticated);
         
         return {
-            cartId: idUser, 
+            cartId: cart.id, 
             items: cart.products,
             price: cart.price
         };

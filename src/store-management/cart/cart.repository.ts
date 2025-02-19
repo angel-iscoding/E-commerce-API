@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Cart } from "src/store-management/cart/cart.entity";
 import { Product } from "../products/product.entity";
+import { User } from "src/user-management/users/user.entity";
 
 @Injectable()
 export class CartRepository {
@@ -45,6 +46,11 @@ export class CartRepository {
 
     async save(cart: Cart): Promise<Cart> {
         return await this.cartRepository.save(cart);
+    }
+
+    async create(user: User): Promise<Cart> {
+        const cart = await this.cartRepository.create({ user });
+        return await this.cartRepository.save(cart) 
     }
 
     async removeProductFromCart(userId: string, productId: string): Promise<void> {

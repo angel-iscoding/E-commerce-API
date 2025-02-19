@@ -25,9 +25,9 @@ export class CartService {
         return user ? true : false  
     }
 
-    async getCart(userId: string, isAuthenticated: boolean): Promise<Cart> {
-        if (isAuthenticated) return await this.cartRepository.getCartByUserId(userId); 
-        const cartTemporaly = await this.cartRedisService.getTemporaryCart(userId);
+    async getCart(cartId: string, isAuthenticated: boolean): Promise<Cart> {
+        if (isAuthenticated) return await this.cartRepository.getCartById(cartId); 
+        const cartTemporaly = await this.cartRedisService.getTemporaryCart(cartId);
 
         if (!cartTemporaly) throw new NotFoundException('Carrito no encontrado');
 
@@ -49,12 +49,9 @@ export class CartService {
                 return product;
             })
         );   
-        
-        console.log(isAuthenticated);
 
         if (isAuthenticated) {
             // Usuario autenticado: solo guardar en DB
-            console.log(productId);
             await this.addProductToUserCart(userId, productId);
         } else {
             // Usuario no autenticado: solo guardar en Redis
