@@ -7,6 +7,7 @@ import { OrderRepository } from "src/store-management/orders/order.repository";
 import { CartRepository } from "src/store-management/cart/cart.repository";
 import { Cart } from "src/store-management/cart/cart.entity";
 import { Order } from "src/store-management/orders/order.entity";
+import { UUID } from "typeorm/driver/mongodb/bson.typings";
 
 @Injectable()
 export class UsersService {
@@ -39,16 +40,12 @@ export class UsersService {
         return this.usersRepository.findOneByEmail(email);
     }
 
-    async createUser(user: UserDto): Promise<User> {
-        const savedUser = await this.usersRepository.createUser(user);
+    async createUser(userDto: UserDto): Promise<User> {
+        const savedUser = await this.usersRepository.createUser(userDto);
 
         const newCart = new Cart();
         newCart.user = savedUser;
-        await this.cartRepository.save(newCart);
-
-        const newOrder = new Order();
-        newOrder.user = savedUser;
-        await this.orderRepository.save(newOrder);
+        newCart.id = savedUser.id;
 
         return savedUser;
     }
