@@ -14,6 +14,8 @@
     <button id="add-products">Add Products</button>
     <h3>Consult Cart</h3>
     <button id="consult-cart">Consult Cart</button>
+    <h3>Clear Local Storage</h3>
+    <button id="clear-local-storage">Clear Local Storage</button>
 
     <script>
         const apiUrl = 'http://localhost:3000';
@@ -41,6 +43,9 @@
 
             const data = await response.json();
             console.log('Register Response:', data);
+            if (data.id) {
+                localStorage.setItem('id', data.id)
+            }
         }
 
         // Función para iniciar sesión
@@ -59,12 +64,10 @@
             });
 
             const data = await response.json();
-            console.log('Login Response:', data);
 
             // Almacenar el token en Local Storage
             if (data.access_token) {
                 localStorage.setItem('access_token', data.access_token);
-                console.log('Item: ', localStorage.getItem('access_token'));
             }
         }
 
@@ -81,7 +84,6 @@
             };
 
             const token = localStorage.getItem('access_token'); // Obtener el token de acceso
-            console.log(token);
             
 
             let addResponse;
@@ -118,16 +120,40 @@
 
         // Función para consultar el carrito
         async function consultCart() {
-            const cartId = localStorage.getItem('cartId'); // Obtener el cartId del Local Storage
-            
-            if (!cartId) {
-                console.log('No hay cartId almacenado.');
-                return;
-            }
+            const token = localStorage.getItem('access_token'); // Obtener el token de Local Storage
+            if (token) {
+                // Si el token existe, puedes proceder con la lógica de consulta del carrito
+                const id = localStorage.getItem('id');
+                console.log(id);
+                
+                const cartResponse = await fetch(`${apiUrl}/cart/${id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`, // Agregar el token en los encabezados
+                        'Content-Type': 'application/json' // Opcional, dependiendo de tu API
+                    }
+                });
+                const cartData = await cartResponse.json();
+                console.log('Consult Cart Response:', cartData);
+            } else {
+                // Si no hay token, verificar si hay un cartId almacenado
+                const cartId = localStorage.getItem('cartId'); // Obtener el cartId del Local Storage
+                
+                if (!cartId) {
+                    console.log('No hay cartId almacenado.');
+                    return;
+                }
 
-            const cartResponse = await fetch(`${apiUrl}/cart/${cartId}`); // Hacer la consulta al endpoint correcto
-            const cartData = await cartResponse.json();
-            console.log('Consult Cart Response:', cartData);
+                const cartResponse = await fetch(`${apiUrl}/cart/${cartId}`); // Hacer la consulta al endpoint correcto
+                const cartData = await cartResponse.json();
+                console.log('Consult Cart Response:', cartData);
+            }
+        }
+
+        // Nueva función para limpiar Local Storage
+        function clearLocalStorage() {
+            localStorage.clear(); // Elimina todo el contenido de Local Storage
+            console.log('Local Storage ha sido limpiado.');
         }
 
         // Asignar eventos a los botones
@@ -135,6 +161,7 @@
         document.getElementById('login').addEventListener('click', loginUser);
         document.getElementById('add-products').addEventListener('click', addProductsToCart);
         document.getElementById('consult-cart').addEventListener('click', consultCart);
+        document.getElementById('clear-local-storage').addEventListener('click', clearLocalStorage); // Asignar evento al nuevo botón
     </script>
 </body>
 </html>
