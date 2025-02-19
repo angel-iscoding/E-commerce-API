@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testing Local Storage</title>
+</head>
+<body>
+    <h3>Register user</h3>
+    <button id="register">Register</button>
+    <h3>Login user</h3>
+    <button id="login">Login</button>
+    <h3>Add products with or without login</h3>
+    <button id="add-products">Add Products</button>
+    <h3>Consult Cart</h3>
+    <button id="consult-cart">Consult Cart</button>
+
+    <script>
+        const apiUrl = 'http://localhost:3000';
+
+        // Función para registrar un nuevo usuario
+        async function registerUser() {
+            const userData = {
+                name: 'John Doe',
+                email: 'john.doe@example.com',
+                password: 'Password123!',
+                confirmPassword: 'Password123!',
+                address: '123 Main St',
+                phone: 1234567890,
+                country: 'USA',
+                city: 'New York'
+            };
+
+            const response = await fetch(`${apiUrl}/auth/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData),
+            });
+
+            const data = await response.json();
+            console.log('Register Response:', data);
+        }
+
+        // Función para iniciar sesión
+        async function loginUser() {
+            const loginData = {
+                email: 'john.doe@example.com',
+                password: 'Password123!',
+            };
+
+            const response = await fetch(`${apiUrl}/auth/signin`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(loginData),
+            });
+
+            const data = await response.json();
+            console.log('Login Response:', data);
+
+            // Almacenar el token en Local Storage
+            if (data.access_token) {
+                localStorage.setItem('access_token', data.access_token);
+                console.log('Item: ', localStorage.getItem('access_token'));
+            }
+        }
+
+        // Función para agregar productos al carrito
+        async function addProductsToCart() {
+            const response = await fetch(`${apiUrl}/products`);
+            const products = await response.json();
+
+            // Tomar los primeros 3 productos
+            const productsToAdd = products.slice(0, 3).map(product => product.id);
+
+            const cartData = {
+                products: productsToAdd,
+            };
+
+            const token = localStorage.getItem('access_token'); // Obtener el token de acceso
+            console.log(token);
+            
+
+            let addResponse;
+            if (token) {
+                // Si el token existe, el usuario está autenticado
+                addResponse = await fetch(`${apiUrl}/cart/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`, // Incluir el token en el encabezado
+                    },
+                    body: JSON.stringify(cartData),
+                });
+            } else {
+                // Si no hay token, el usuario no está autenticado
+                addResponse = await fetch(`${apiUrl}/cart/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(cartData),
+                });
+            }
+
+            const addData = await addResponse.json();
+            console.log('Add Products Response:', addData);
+
+            // Guardar el userId en Local Storage si el usuario no está autenticado
+            if (!addData.isAuthenticated) {
+                localStorage.setItem('cartId', addData.userId);
+                console.log('Cart ID almacenado en Local Storage:', addData.userId);
+            }
+        }
+
+        // Función para consultar el carrito
+        async function consultCart() {
+            const cartId = localStorage.getItem('cartId'); // Obtener el cartId del Local Storage
+            
+            if (!cartId) {
+                console.log('No hay cartId almacenado.');
+                return;
+            }
+
+            const cartResponse = await fetch(`${apiUrl}/cart/${cartId}`); // Hacer la consulta al endpoint correcto
+            const cartData = await cartResponse.json();
+            console.log('Consult Cart Response:', cartData);
+        }
+
+        // Asignar eventos a los botones
+        document.getElementById('register').addEventListener('click', registerUser);
+        document.getElementById('login').addEventListener('click', loginUser);
+        document.getElementById('add-products').addEventListener('click', addProductsToCart);
+        document.getElementById('consult-cart').addEventListener('click', consultCart);
+    </script>
+</body>
+</html>
