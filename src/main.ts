@@ -16,6 +16,13 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document);
 
+    // Habilitar CORS
+    app.enableCors({
+        origin: 'http://127.0.0.1:8080', // Permitir solo este origen
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        credentials: true, // Si necesitas enviar cookies o encabezados de autorización
+    });
+
     await app.listen(process.env.PORT || 3000);
 }
 
