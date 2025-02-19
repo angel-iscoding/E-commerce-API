@@ -138,15 +138,18 @@ export class UsersRepository {
     return await this.usersRepository.findOne({ where: {email: email}}); 
   }
 
-  async createUser(user: UserDto): Promise<User> {
+  async create(user: UserDto): Promise<User> {
     const thisUserExist = await this.findOneByEmail(user.email);
 
     if (thisUserExist) throw new InternalServerErrorException('El usuario ya fue registrado');
-
-    const newUser = this.usersRepository.create(user); 
     
-    return await this.usersRepository.save(newUser);
+    const newUser = await this.usersRepository.create(user); 
+    return await this.usersRepository.save(newUser)
   }
+  
+  async save(user: User): Promise<User> {    
+    return await this.usersRepository.save(user); 
+  }  
 
   async updateUser(id: string, updateUser: UserDto): Promise<User | null> {
     const userToUpdate = await this.getUserById(id);

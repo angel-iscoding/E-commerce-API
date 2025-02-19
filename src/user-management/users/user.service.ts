@@ -41,13 +41,11 @@ export class UsersService {
     }
 
     async createUser(userDto: UserDto): Promise<User> {
-        const savedUser = await this.usersRepository.createUser(userDto);
+        const user = await this.usersRepository.create(userDto);
+        
+        const cart = this.cartRepository.create(user);
 
-        const newCart = new Cart();
-        newCart.user = savedUser;
-        newCart.id = savedUser.id;
-
-        return savedUser;
+        return user;
     }
 
     async updateUser(id: string, updatedUser: UserDto):Promise<User> {

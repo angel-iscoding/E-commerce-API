@@ -12,16 +12,8 @@ import { AuthService } from '../../auth/auth.service';
 import { UserDto } from 'src/database/users/user.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserIdParam } from 'src/database/users/userIdParam.dto';
 // import { SignUpDto } from 'src/database/sing-up.dto';
-
-class UserIdParam {
-  @ApiProperty({ 
-    description: 'UUID del usuario',
-    example: '123e4567-e89b-12d3-a456-426614174000'
-  })
-  @IsUUID()
-  id: string;
-}
 
 @ApiTags('Users')
 @ApiBearerAuth()
