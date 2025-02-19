@@ -17,6 +17,7 @@ export class CartController {
     ) {}
 
     @Post('add')
+    @UseGuards(AuthGuard)
     @ApiOperation({ 
         summary: 'Agregar productos al carrito',
         description: 'Agrega productos al carrito. Si el usuario está autenticado, se guarda en DB, si no, en Redis.'
@@ -49,6 +50,8 @@ export class CartController {
         @Request() req
     ): Promise<{ message: string, userId: string, isAuthenticated: boolean }> {
         const isAuthenticated = req.user !== undefined;
+        console.log('Finally exits', req.user);
+        
         const userId = isAuthenticated ? req.user.id : (uuidv4());
 
         console.log(userId);

@@ -48,13 +48,13 @@ export class CartService {
                 if (!product) throw new NotFoundException(`Producto ${id} no encontrado`);
                 return product;
             })
-        );
-
-        console.log(products);
+        );   
         
+        console.log(isAuthenticated);
 
         if (isAuthenticated) {
             // Usuario autenticado: solo guardar en DB
+            console.log(productId);
             await this.addProductToUserCart(userId, productId);
         } else {
             // Usuario no autenticado: solo guardar en Redis
@@ -65,28 +65,30 @@ export class CartService {
     }
 
     async addProductToUserCart(id: string, productId: string[]): Promise<Cart> {
-        const user = await this.userRepository.getUserById(id)
+        const cart = await this.cartRepository.getCartById(id);
 
-        if (!user) throw new NotFoundException ('Error al encontrar el usuario');
+        if (!cart) throw new NotFoundException('Error al encontrar el usuario');
 
+        // Verificar si el carrito existe
+        
         const validProducts = await Promise.all(productId.map(async (currentProduct) => {    
             const product = await this.productRepostory.getProductById(currentProduct);
-            if (!product) return
-            return product
+            if (!product) return;
+            return product;
         }));
 
         for (const currentProduct of validProducts) {
             if (currentProduct) {
-                user.cart.products.push(currentProduct);
+                cart.products.push(currentProduct);
             }
         }
 
         // Recalcular el precio total del carrito
-        user.cart.price = user.cart.products.reduce((total, currentProduct) => {
-            return total + currentProduct.price;
-        }, 0);
+        cart.price = Number(cart.products.reduce((total, currentProduct) => {
+            return total + Number(currentProduct.price);
+        }, 0).toFixed(2));
 
-        return await this.cartRepository.save(user.cart);
+        return await this.cartRepository.save(cart);
     }
 
     async deleteProduct(id: string, productId: string[]): Promise<Cart> {
