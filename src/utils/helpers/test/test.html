@@ -14,8 +14,13 @@
     <button id="add-products">Add Products</button>
     <h3>Consult Cart</h3>
     <button id="consult-cart">Consult Cart</button>
+    <h3>Migrate from gest to a userCart</h3>
+    <button id="migrate">Migrate</button>
+    
     <h3>Clear Local Storage</h3>
     <button id="clear-local-storage">Clear Local Storage</button>
+
+
 
     <script>
         const apiUrl = 'http://localhost:3000';
@@ -69,6 +74,9 @@
             if (data.access_token) {
                 localStorage.setItem('access_token', data.access_token);
             }
+
+            console.log('¡Usuario logeado!');
+            
         }
 
         // Función para agregar productos al carrito
@@ -106,17 +114,57 @@
                     },
                     body: JSON.stringify(cartData),
                 });
-            }
 
+
+            }
             const addData = await addResponse.json();
             console.log('Add Products Response:', addData);
 
             // Guardar el userId en Local Storage si el usuario no está autenticado
             if (!addData.isAuthenticated) {
-                localStorage.setItem('cartId', addData.userId);
-                console.log('Cart ID almacenado en Local Storage:', addData.userId);
+                localStorage.setItem('temporalyCart', addData.userId);
+                const id = localStorage.getItem('temporalyCart')
+                console.log(id);
+                
+                console.log('Temporaly Cart ID almacenado en Local Storage:', addData.userId);
             }
         }
+
+        async function migrateToExistingCart() {
+            const token = localStorage.getItem('access_token');
+            const temporaryUserId = localStorage.getItem('temporalyCart'); // Obtener el ID temporal
+
+            console.log('Entrando en Migracion. Token:', token);
+            console.log('Temporary User ID:', temporaryUserId);
+            
+            let response;
+            if (token && temporaryUserId) {
+                try {
+                    response = await fetch(`${apiUrl}/cart/migrate`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            temporaryUserId: temporaryUserId // Usar el mismo nombre que en el DTO
+                        })
+                    });
+
+                    const responseData = await response.json();
+                    console.log('Migración exitosa:', responseData);
+                    
+                    // Limpiar el ID temporal después de una migración exitosa
+                    localStorage.removeItem('temporalyCart');
+                } catch (error) {
+                    console.error('Error durante la migración:', error);
+                }
+            } else {
+                console.log('No existe un usuario o un guest');
+                return;
+            }
+        }
+
 
         // Función para consultar el carrito
         async function consultCart() {
@@ -136,15 +184,15 @@
                 const cartData = await cartResponse.json();
                 console.log('Consult Cart Response:', cartData);
             } else {
-                // Si no hay token, verificar si hay un cartId almacenado
-                const cartId = localStorage.getItem('cartId'); // Obtener el cartId del Local Storage
+                // Si no hay token, verificar si hay un temporalyCart almacenado
+                const temporalyCart = localStorage.getItem('temporalyCart'); // Obtener el temporalyCart del Local Storage
                 
-                if (!cartId) {
-                    console.log('No hay cartId almacenado.');
+                if (!temporalyCart) {
+                    console.log('No hay temporalyCart almacenado.');
                     return;
                 }
 
-                const cartResponse = await fetch(`${apiUrl}/cart/${cartId}`); // Hacer la consulta al endpoint correcto
+                const cartResponse = await fetch(`${apiUrl}/cart/${temporalyCart}`); // Hacer la consulta al endpoint correcto
                 const cartData = await cartResponse.json();
                 console.log('Consult Cart Response:', cartData);
             }
@@ -162,6 +210,7 @@
         document.getElementById('add-products').addEventListener('click', addProductsToCart);
         document.getElementById('consult-cart').addEventListener('click', consultCart);
         document.getElementById('clear-local-storage').addEventListener('click', clearLocalStorage); // Asignar evento al nuevo botón
+        document.getElementById('migrate').addEventListener('click', migrateToExistingCart);
     </script>
 </body>
 </html>
