@@ -30,85 +30,19 @@ export class ProductsController {
     ) {}
 
     @Get()
-    @ApiOperation({ 
-        summary: 'Obtener todos los productos',
-        description: 'Retorna una lista paginada de productos disponibles en la tienda.'
-    })
-    @ApiQuery({
-        name: 'page',
-        required: false,
-        description: 'Número de página para la paginación',
-        type: Number
-    })
-    @ApiQuery({
-        name: 'limit',
-        required: false,
-        description: 'Cantidad de productos por página',
-        type: Number
-    })
-    @ApiResponse({ 
-        status: 200, 
-        description: 'Lista de productos obtenida exitosamente',
-        type: [Product]
-    })
     async getAllProducts(@Query() paginationQuery: PaginationQueryDto): Promise<Product[]> {
         return await this.productsService.getAllProducts();
     }
 
     @Get(':id')
-    @ApiOperation({ 
-        summary: 'Obtener producto por ID',
-        description: 'Retorna la información detallada de un producto específico'
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'UUID del producto a buscar',
-        type: String
-    })
-    @ApiResponse({ 
-        status: 200, 
-        description: 'Producto encontrado exitosamente',
-        type: Product
-    })
-    @ApiResponse({ 
-        status: 404, 
-        description: 'Producto no encontrado' 
-    })
     async getProductById(@Param('id') id: string): Promise<Product> {
         return await this.productsService.getProductById(id);
     }
 
     @Post('post')
-    @ApiOperation({ 
-        summary: 'Crear nuevo producto',
-        description: 'Crea un nuevo producto en la tienda. Requiere autenticación.'
-    })
-    @ApiBody({ 
-        type: ProductDto,
-        description: 'Datos del nuevo producto'
-    })
-    @ApiResponse({ 
-        status: 201, 
-        description: 'Producto creado exitosamente',
-        schema: {
-            type: 'object',
-            properties: {
-                message: {
-                    type: 'string',
-                    example: '123e4567-e89b-12d3-a456-426614174000'
-                }
-            }
-        }
-    })
-    @ApiResponse({ 
-        status: 400, 
-        description: 'Datos inválidos del producto' 
-    })
-    @ApiResponse({ 
-        status: 401, 
-        description: 'No autorizado' 
-    })
+    @ApiBearerAuth()
     @UseGuards(AuthGuard)
+    @Roles(Role.Admin)
     @UseInterceptors(DateAdderInterceptor)
     async createProduct(@Body() product: ProductDto): Promise<{ message: string }> {
         try {
@@ -120,18 +54,9 @@ export class ProductsController {
     }
 
     @Post('seeder')
-    @ApiOperation({ 
-        summary: 'Precargar productos',
-        description: 'Carga datos iniciales de productos. Solo usar en base de datos vacía.'
-    })
-    @ApiResponse({ 
-        status: 201, 
-        description: 'Productos precargados exitosamente' 
-    })
-    @ApiResponse({ 
-        status: 500, 
-        description: 'Error - Base de datos no está vacía' 
-    })
+    @UseGuards(AuthGuard)
+    @Roles(Role.Admin)
+    @ApiBearerAuth()
     async seederProducts() {
         if((await this.productsService.getAllProducts()).length) {
             throw new InternalServerErrorException('Solo usar cuando los productos estén vacíos'); 
@@ -141,31 +66,7 @@ export class ProductsController {
     }
 
     @Put('put/:id')
-    @ApiOperation({ 
-        summary: 'Actualizar producto',
-        description: 'Actualiza la información de un producto existente. Solo administradores.'
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'UUID del producto a actualizar'
-    })
-    @ApiBody({ 
-        type: ProductDto,
-        description: 'Datos actualizados del producto'
-    })
-    @ApiResponse({ 
-        status: 200, 
-        description: 'Producto actualizado exitosamente',
-        schema: {
-            type: 'object',
-            properties: {
-                message: {
-                    type: 'string',
-                    example: '123e4567-e89b-12d3-a456-426614174000'
-                }
-            }
-        }
-    })
+    @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin)
     async updateProduct(@Param() params: ProductIdParam, @Body() product: ProductDto): Promise<{ message: string }>{
@@ -178,27 +79,7 @@ export class ProductsController {
     }
 
     @Delete('delete/:id')
-    @ApiOperation({ 
-        summary: 'Eliminar producto',
-        description: 'Elimina permanentemente un producto del sistema. Solo administradores.'
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'UUID del producto a eliminar'
-    })
-    @ApiResponse({ 
-        status: 200, 
-        description: 'Producto eliminado exitosamente',
-        schema: {
-            type: 'object',
-            properties: {
-                message: {
-                    type: 'string',
-                    example: 'Producto eliminado correctamente'
-                }
-            }
-        }
-    })
+    @ApiBearerAuth()
     @UseInterceptors(DateAdderInterceptor)
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin)
