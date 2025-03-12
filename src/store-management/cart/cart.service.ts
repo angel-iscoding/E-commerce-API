@@ -88,6 +88,27 @@ export class CartService {
         return await this.cartRepository.save(cart);
     }
 
+    async buyCart(userId: string): Promise<boolean> {
+        const user = await this.userRepository.getUserById(userId);
+        
+        if (!user) throw new NotFoundException('Usuario no encontrado');
+
+        console.log(user.cart);
+        
+        const cart = await this.cartRepository.getCartById(user.cart.id);
+
+        if (!cart) throw new NotFoundException('Carrito no encontrado');
+
+        // Lógica para realizar la compra
+        // ...
+
+        // Limpiar carrito
+        await this.cartRepository.clearCart(userId);
+
+        return true;
+    }
+
+
     async deleteProduct(id: string, productId: string[]): Promise<Cart> {
         const user = await this.userRepository.getUserById(id)
 
@@ -127,7 +148,7 @@ export class CartService {
     async migrateCartToUser(temporaryUserId: string, authenticatedUserId: string): Promise<void> {
         // Cuando un usuario inicia sesión, migrar su carrito temporal a la DB
         const temporaryCart = await this.cartRedisService.getTemporaryCart(temporaryUserId);
-        
+
         if (temporaryCart.products.length > 0) {
             const productIds = temporaryCart.products.map(product => product.id);
             await this.addProductToUserCart(authenticatedUserId, productIds);
