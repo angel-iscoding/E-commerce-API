@@ -17,19 +17,15 @@ export class OrderController {
     constructor(private readonly orderService: OrderService) {}
 
     @Get()
-    @ApiOperation({ summary: 'Get all orders' })
-    @ApiResponse({ status: 200, description: 'List of orders retrieved successfully' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
     @UseGuards(AuthGuard)
+    @ApiBearerAuth()
     async getAllOrders() {
         return await this.orderService.getAllOrders();
     }
 
     @Get(':id')
-    @ApiOperation({ summary: 'Get order by ID' })
-    @ApiResponse({ status: 200, description: 'Order found successfully' })
-    @ApiResponse({ status: 404, description: 'Order not found' })
     @UseGuards(AuthGuard)
+    @ApiBearerAuth()
     async getOrder(@Param() params: OrderIdParam) {
         const order = await this.orderService.getById(params.id);
         if (!order) {
@@ -39,10 +35,8 @@ export class OrderController {
     }
 
     @Post('post')
-    @ApiOperation({ summary: 'Create new order' })
-    @ApiResponse({ status: 201, description: 'Order created successfully' })
-    @ApiResponse({ status: 400, description: 'Bad request - Invalid data' })
     @UseGuards(AuthGuard)
+    @ApiBearerAuth()
     async createOrder(@Body() createOrderDto: OrderDto) {
         try {
             return await this.orderService.createOrder(createOrderDto);
