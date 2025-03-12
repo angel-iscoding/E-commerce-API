@@ -1,14 +1,14 @@
-import { BadRequestException, Body, Controller, Delete, Get, Post, Put, UseGuards, Request, Param } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Post, UseGuards, Request, Param } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { ApiOperation, ApiTags, ApiResponse, ApiBody, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
-import { ApiProperty } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import { Cart } from './cart.entity';
 import { cartDto } from 'src/database/cart/cartDto.dto';
 import { MigrateCartDto } from 'src/database/cart/migrateCartDto.dto';
 import { RemoveFromCartDto } from 'src/database/cart/removeFromCartDto.dto';
 import { UserIdParam } from 'src/database/users/userIdParam.dto';
+import { Request as ExpressRequest } from 'express';
 
 @ApiTags('Cart')
 @Controller('cart')
@@ -19,40 +19,10 @@ export class CartController {
 
     @Post('add')
     @UseGuards(AuthGuard)
-    @ApiOperation({ 
-        summary: 'Agregar productos al carrito',
-        description: 'Agrega productos al carrito. Si el usuario está autenticado, se guarda en DB, si no, en Redis.'
-    })
-    @ApiBody({ type: cartDto })
-    @ApiResponse({ 
-        status: 200, 
-        description: 'Productos agregados exitosamente',
-        schema: {
-            type: 'object',
-            properties: {
-                message: {
-                    type: 'string',
-                    example: 'Productos agregados al carrito'
-                },
-                userId: {
-                    type: 'string',
-                    example: 'user123'
-                },
-                isAuthenticated: {
-                    type: 'boolean',
-                    example: true
-                }
-            }
-        }
-    })
-    @ApiResponse({ status: 400, description: 'Error al agregar productos' })
-    async addToCart(
-        @Body() data: cartDto,
-        @Request() req
-    ): Promise<{ message: string, userId: string, isAuthenticated: boolean }> {
-        const isAuthenticated = req.user ? true : false;
-        
-        const userId = isAuthenticated ? req.user.id : (uuidv4());
+    @ApiBearerAuth()
+    async addToCart( @Body() data: cartDto, @Request() req: ExpressRequest ): Promise<{ message: string, id: string }> {
+        const isAuthenticated: boolean = req.user ? true : false;
+        const userId: string = isAuthenticated ? req.user.id : uuidv4() ;
 
         await this.cartService.addProductToCart(
             userId, 
@@ -60,91 +30,63 @@ export class CartController {
             isAuthenticated
         );    
 
-        return { 
-            message: 'Productos agregados al carrito',
-            userId: userId,
-            isAuthenticated: isAuthenticated
-        };
+        if (isAuthenticated) {
+            return { 
+                message: `Productos: ${data.products}. Agregados al carrito del usuario.`,
+                id: userId,
+            };
+        }
     }
 
     @Get(':id')
     @UseGuards(AuthGuard)
-    @ApiOperation({ 
-        summary: 'Obtener carrito',
-        description: 'Obtiene el carrito. Para usuarios no autenticados, genera un ID temporal si no existe.'
-    })
-    async getCart(
-        @Param() idUser: UserIdParam,
-        @Request() req
-    ): Promise<any> {
-        const isAuthenticated = req.user ? true : false;
-
-        console.log(isAuthenticated, req.user);
-        
-        
+    @ApiBearerAuth()
+    async getCart( @Param() idUser: UserIdParam, @Request() req: ExpressRequest ): Promise<{ message: string, id: string, cart: Cart }> { 
+        const isAuthenticated: boolean = req.user ? true : false;
         const cart: Cart = await this.cartService.getCart(idUser.id, isAuthenticated);
         
         return {
-            cartId: cart.id, 
-            items: cart.products,
-            price: cart.price
+            message: `Carrito ${isAuthenticated ? '' : 'de usuario no autentificado '}obtenido con exito`,
+            id: idUser.id,
+            cart: cart,
         };
+    }
+
+    @Post('process')
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard)
+    async buyCart ( @Request() req: ExpressRequest ): Promise<{ message: string, id: string }> {
+        const isAuthenticated: boolean = req.user ? true : false;
+
+        if (!isAuthenticated) throw new BadRequestException('No se puede comprar sin iniciar sesión');
+        const userId: string = req.user.id; 
+
+        await this.cartService.buyCart(userId)
+        return {
+            message: 'Compra realizada con exito',
+            id: userId,
+        }
     }
 
     @Post('migrate')
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    @ApiOperation({ 
-        summary: 'Migrar carrito temporal a permanente',
-        description: 'Migra el carrito temporal de Redis a la base de datos cuando un usuario inicia sesión'
-    })
-    @ApiBody({ type: MigrateCartDto })
-    @ApiResponse({ 
-        status: 200, 
-        description: 'Carrito migrado exitosamente',
-        schema: {
-            type: 'object',
-            properties: {
-                message: { 
-                    type: 'string',
-                    example: 'Carrito migrado exitosamente'
-                }
-            }
-        }
-    })
-    @ApiResponse({ status: 401, description: 'No autorizado' })
-    async migrateCart(
-        @Body() data: MigrateCartDto,
-        @Request() req
-    ): Promise<{ message: string }> {
-        await this.cartService.migrateCartToUser(data.temporaryUserId, req.user.id);
+    async migrateCart( @Body() data: MigrateCartDto, @Request() req: ExpressRequest ): Promise<{ message: string }> {
+        const isAuthenticated: boolean = req.user ? true : false;
+        
+        if (!isAuthenticated) throw new BadRequestException('El usuario debe estar logeado para hacer esta peticion.') 
+        
+        const userId: string = req.user.id;
+
+        await this.cartService.migrateCartToUser(data.temporaryUserId, userId);
         return { message: 'Carrito migrado exitosamente' };
     }
 
     @Delete('remove')
-    @ApiOperation({ 
-        summary: 'Remover producto del carrito',
-        description: 'Remueve un producto específico del carrito'
-    })
-    @ApiBody({ type: RemoveFromCartDto })
-    @ApiResponse({ 
-        status: 200, 
-        description: 'Producto removido exitosamente',
-        schema: {
-            type: 'object',
-            properties: {
-                message: {
-                    type: 'string',
-                    example: 'Producto removido del carrito'
-                }
-            }
-        }
-    })
-    async removeFromCart(
-        @Body() data: RemoveFromCartDto,
-        @Request() req
-    ): Promise<{ message: string }> {
-        const isAuthenticated = req.user !== undefined;
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    async removeFromCart( @Body() data: RemoveFromCartDto, @Request() req: ExpressRequest ): Promise<{ message: string }> {
+        const isAuthenticated: boolean = req.user ? true : false;
         await this.cartService.removeFromCart(
             data.userId,
             data.productId,
@@ -154,41 +96,14 @@ export class CartController {
     }
 
     @Delete('clear')
-    @ApiOperation({ 
-        summary: 'Limpiar carrito',
-        description: 'Elimina todos los productos del carrito'
-    })
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                userId: {
-                    type: 'string',
-                    example: 'user123',
-                    description: 'ID del usuario o ID temporal'
-                }
-            }
-        }
-    })
-    @ApiResponse({ 
-        status: 200, 
-        description: 'Carrito limpiado exitosamente',
-        schema: {
-            type: 'object',
-            properties: {
-                message: {
-                    type: 'string',
-                    example: 'Carrito limpiado'
-                }
-            }
-        }
-    })
-    async clearCart(
-        @Body() data: { userId: string },
-        @Request() req
-    ): Promise<{ message: string }> {
-        const isAuthenticated = req.user !== undefined;
-        await this.cartService.clearCart(data.userId, isAuthenticated);
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    async clearCart( @Body() data: UserIdParam, @Request() req: ExpressRequest ): Promise<{ message: string }> {
+        const isAuthenticated: boolean = req.user ? true : false;
+
+        const userId : string = isAuthenticated ? req.user.id : data.id;
+
+        await this.cartService.clearCart(userId, isAuthenticated);
         return { message: 'Carrito limpiado' };
     }
 }
