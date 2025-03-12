@@ -1,6 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
+import { PayloadDto } from 'src/database/users/payload.dto';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -16,8 +17,8 @@ export class AuthGuard implements CanActivate {
 
       if (authType === 'Bearer' && token) {
         try {
-          const payload = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
-          request['user'] = payload; // Si el token es válido, asignamos el usuario
+          const payload: PayloadDto = this.jwtService.verify(token, { secret: process.env.JWT_SECRET });
+          request.user = payload; // Add user to request object for future use
           return true;
         } catch (error) {
           response.status(401).json({ message: 'Token no válido' });
@@ -27,9 +28,6 @@ export class AuthGuard implements CanActivate {
     }
 
     if (request.url.startsWith('/cart')) {
-      console.log('No autentificado');
-      
-      request['user'] = undefined;
       return true;
     }
 
