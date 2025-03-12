@@ -15,25 +15,18 @@ export class CategoriesController {
   constructor(private categoriesService: CategoriesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all categories' })
-  @ApiResponse({ status: 200, description: 'List of categories retrieved successfully' })
   async getAllCategories(): Promise<Category[]> {
     return await this.categoriesService.getCategories();
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get category by ID' })
-  @ApiResponse({ status: 200, description: 'Category found successfully' })
-  @ApiResponse({ status: 404, description: 'Category not found' })
   async getCategoryById(@Param('id') id: string): Promise<Category> {
     return await this.categoriesService.getById(id);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create new category' })
-  @ApiResponse({ status: 201, description: 'Category created successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request - Invalid data' })
   @UseGuards(AuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @Roles(Role.Admin)
   async createCategory(@Body() createCategoryDto: CreateCategoryDto): Promise<Category> {
     if(await this.categoriesService.thisCategoryExist(createCategoryDto.name)) throw new InternalServerErrorException('Esta categoria ya existe')
@@ -41,10 +34,8 @@ export class CategoriesController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete category' })
-  @ApiResponse({ status: 200, description: 'Category deleted successfully' })
-  @ApiResponse({ status: 404, description: 'Category not found' })
   @UseGuards(AuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @Roles(Role.Admin)
   async deleteCategory(@Param('id') id: string): Promise<void> {
     await this.categoriesService.deleteCategory(id);
