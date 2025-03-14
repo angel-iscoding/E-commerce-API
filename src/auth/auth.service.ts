@@ -29,11 +29,7 @@ export class AuthService {
     }
 
     async signIn(email: string, password: string): Promise<string | null> {
-        const user: User = await this.usersService.findByEmail(email);
-
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            throw new BadRequestException('Email o contraseña incorrectos');
-        }
+        const user: User = await this.usersService.comparePassword(email, password);
 
         const payload: PayloadDto = { email: user.email, id: user.id, roles: user.admin ? [Role.Admin] : [Role.User] };
         return this.jwtService.sign(payload, { secret: `${process.env.JWT_SECRET}` });
