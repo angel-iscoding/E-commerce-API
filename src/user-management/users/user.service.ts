@@ -1,19 +1,15 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { UsersRepository } from "./user.repository";
 import { UserDto } from "src/database/users/user.dto";
 import * as bcrypt from 'bcryptjs';
 import { User } from "./user.entity";
-import { OrderRepository } from "src/store-management/orders/order.repository";
 import { CartRepository } from "src/store-management/cart/cart.repository";
 import { Cart } from "src/store-management/cart/cart.entity";
-import { Order } from "src/store-management/orders/order.entity";
-import { UUID } from "typeorm/driver/mongodb/bson.typings";
 
 @Injectable()
 export class UsersService {
     constructor (
         private readonly usersRepository: UsersRepository,
-        private readonly orderRepository: OrderRepository,
         private readonly cartRepository: CartRepository,
     ) {}
 
@@ -32,27 +28,40 @@ export class UsersService {
         return pages; 
     }
 
-    async getUserById(id: string): Promise<User | null> {
-        return this.usersRepository.getUserById(id);
+    async getUserById(id: string): Promise<Omit<User, "password" | null>> {
+        return await this.usersRepository.getUserById(id);
     }
 
-    async findByEmail(email: string): Promise<User | null> {
-        return this.usersRepository.findOneByEmail(email);
+    async findByEmail(email: string): Promise<Omit<User, "password" | null>> {
+        return await this.usersRepository.findOneByEmail(email);
     }
+
+    async comparePassword(email: string, password: string): Promise<User> {
+        const user = await this.usersRepository.findOneByEmail(email);
+
+        if (!user) throw new NotFoundException('Usuario no encontrado');
+
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) throw new UnauthorizedException('Contraseña incorrecta');
+
+        return user;
+    }
+    
 
     async createUser(userDto: UserDto): Promise<User> {
-        const user = await this.usersRepository.create(userDto);
-        
-        const cart = this.cartRepository.create(user);
+        const user: User = await this.usersRepository.create(userDto);
+
+        const cart: Cart = await this.cartRepository.create(user);
 
         return user;
     }
 
     async updateUser(id: string, updatedUser: UserDto):Promise<User> {
-        return this.usersRepository.updateUser(id, updatedUser);
+        return await this.usersRepository.updateUser(id, updatedUser);
     }
 
     async deleteUser(id: string): Promise<void> {
-        await this.usersRepository.deleteUser(id);
+        await await this.usersRepository.deleteUser(id);
     }
 }
