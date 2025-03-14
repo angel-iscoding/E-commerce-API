@@ -42,6 +42,9 @@ export class CategoriesController {
   }
 
   @Post('seeder')
+  @UseGuards(AuthGuard)
+  @Roles(Role.Admin)
+  @ApiBearerAuth()
   async seederCategories() {
     if((await this.categoriesService.getCategories()).length) throw new InternalServerErrorException('Solo usar cuando las categorias esten vacias'); 
 
