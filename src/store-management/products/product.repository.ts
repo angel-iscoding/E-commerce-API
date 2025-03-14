@@ -116,19 +116,17 @@ export class ProductsRepository {
       return await this.productsRepository.save(newProduct);
     }
     
-    async updateProduct(id: string, updateProduct: ProductDto): Promise<Product | undefined> { //Probablemente haya un problema
-      const productToUpdate = await this.getProductById(id);
-      if (!productToUpdate) return undefined;
-      
-      await this.productsRepository.update(productToUpdate.id, updateProduct);
-
-      return await this.productsRepository.findOne({where: {id: id}})
+    async updateProduct(product: Product, updateProduct: ProductDto): Promise<Product> { 
+      await this.productsRepository.update(product.id, updateProduct);
+      return await this.productsRepository.findOne({where: {id: product.id}});
     }
-
+    
     async deleteProduct(id: string): Promise<void> {
-      const productToDelete = await this.getProductById(id);
-      if (!productToDelete) return undefined;
-
-      this.productsRepository.delete(productToDelete.id);
+      await this.productsRepository.delete({id: id});
     }    
+
+    async downStock(product: Product): Promise<Product> {
+      await this.productsRepository.update(product, {...product, stock: product.stock - 1});
+      return await this.productsRepository.findOne({where: {id: product.id}});
+    }
 }
