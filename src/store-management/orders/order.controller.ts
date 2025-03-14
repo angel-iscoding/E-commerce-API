@@ -18,26 +18,40 @@ export class OrderController {
     @UseGuards(AuthGuard)
     @Roles(Role.Admin)
     @ApiBearerAuth()
-    async getAllOrders() {
-        return await this.orderService.getAllOrders();
+    async getAllOrders(): Promise<Order[]> {
+        try {
+            return await this.orderService.getAllOrders();
+        } catch (error) {
+            throw new BadRequestException('No se pudo obtener las ordenes: ' + error.message);
+        }
     }
 
     @Get(':id')
     @UseGuards(AuthGuard)
     @Roles(Role.Admin)
     @ApiBearerAuth()
-    async getOrder(@Param() params: idParamDto) {
-        const order = await this.orderService.getById(params.id);
-        if (!order) {
-            throw new NotFoundException('Orden no encontrada');
+    async getOrder(@Param() params: idParamDto): Promise<{ message: string}> {
+        try {
+            const order = await this.orderService.getById(params.id);
+            if (!order) {
+                throw new NotFoundException('Orden no encontrada');
+            }
+            return { message: `Orden: ${order}` };
+        } catch (error) {
+            throw new BadRequestException('No se pudo obtener la orden: ' + error.message);
         }
-        return order;
     }
 
     @Get('orders')
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    async getOrderOfUser(@Request() req: ExpressRequest): Promise<Order[]> {
-        return await this.orderService.getOrdersOfUser(req.user.id);
+    async getOrderOfUser(@Request() req: ExpressRequest): Promise< {message: string }> {
+        try {
+            const orders = await this.orderService.getOrdersOfUser(req.user.id);
+            return { message: `Ordenes: ${orders}` };
+        } catch (error) {
+            throw new BadRequestException('No se pudo obtener las ordenes del usuario: ' + error.message);
+        }
+        
     }
 }

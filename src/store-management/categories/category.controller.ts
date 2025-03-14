@@ -16,29 +16,49 @@ export class CategoriesController {
 
   @Get()
   async getAllCategories(): Promise<Category[]> {
-    return await this.categoriesService.getCategories();
+    try {
+      return await this.categoriesService.getCategories();
+    } catch (error) {
+      throw new InternalServerErrorException('No se pudo obtener las categorias: ' + error.message);
+    }
   }
 
   @Get(':id')
-  async getCategoryById(@Param('id') id: string): Promise<Category> {
-    return await this.categoriesService.getById(id);
+  async getCategoryById(@Param('id') id: string): Promise<{ message: string }> {
+    try {
+      const category: Category = await this.categoriesService.getById(id);
+      return { message: `Category: ${category}` };
+    } catch (error) {
+      throw new InternalServerErrorException('No se pudo obtener la categoria: ' + error.message);
+    }
   }
 
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(Role.Admin)
-  async createCategory(@Body() createCategoryDto: CreateCategoryDto): Promise<Category> {
-    if(await this.categoriesService.thisCategoryExist(createCategoryDto.name)) throw new InternalServerErrorException('Esta categoria ya existe')
-    return await this.categoriesService.createCategory(createCategoryDto)
+  async createCategory(@Body() createCategoryDto: CreateCategoryDto): Promise<{ message: string }> {
+    try {    
+      if(await this.categoriesService.thisCategoryExist(createCategoryDto.name)) throw new InternalServerErrorException('Esta categoria ya existe')
+      const category: Category = await this.categoriesService.createCategory(createCategoryDto)
+      return { message: `Nueva categoria creada: ${category}` };
+    } catch (error) {
+      throw new InternalServerErrorException('No se pudo crear la categoria: ' + error.message);
+    }
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(Role.Admin)
-  async deleteCategory(@Param('id') id: string): Promise<void> {
-    await this.categoriesService.deleteCategory(id);
+  async deleteCategory(@Param('id') id: string): Promise<{ message: string}> {
+    try {
+        if(!await this.categoriesService.getById(id)) throw new InternalServerErrorException('Esta categoria no existe')
+        await this.categoriesService.deleteCategory(id);
+        return { message: `Categoria eliminada correctamente` };
+    } catch (error) {
+      throw new InternalServerErrorException('No se pudo eliminar la categoria: ' + error.message);
+    }
   }
 
   @Post('seeder')
