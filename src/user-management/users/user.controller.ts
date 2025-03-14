@@ -25,20 +25,27 @@ export class UsersController {
     @Roles(Role.Admin)
     @ApiBearerAuth()
     async getAllUsers(@Query() paginationQuery: PaginationQueryDto): Promise<Omit<User[], 'password'>[]> {
-        const { page, limit } = paginationQuery;
-        return await this.usersService.getAllUsers(page, limit);
+        try {
+            const { page, limit } = paginationQuery;
+            return await this.usersService.getAllUsers(page, limit);
+        } catch (error) { 
+            throw new BadRequestException('No se pudo obtener los usuarios: ' + error.message);
+        }
     }
 
     @Get(':id')
     @Roles(Role.Admin)
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    async getUserById(@Param() params: idParamDto): Promise<Omit<User, 'password'> | undefined> {
-        const user = await this.usersService.getUserById(params.id);
+    async getUserById(@Param() params: idParamDto): Promise<{ message: string }> {
+        try {
+            const user = await this.usersService.getUserById(params.id);
+            if (!user) throw new NotFoundException('Usuario no encontrado');
+            return { message: `Usuario: ${user}` };    
+        } catch (error) { 
+            throw new BadRequestException('No se pudo obtener el usuario: ' + error.message);
+        }
         
-        if (!user) throw new NotFoundException('Usuario no encontrado');
-    
-        return user;
     }
 
     @Put('put/:id')
