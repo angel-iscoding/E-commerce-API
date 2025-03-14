@@ -102,6 +102,10 @@ export class CartService {
 
         // Limpiar carrito
 
+        cart.products.forEach(async (product) => {
+            await this.productRepostory.downStock(product);
+        });
+
         await this.cartRepository.clearCart(cart);
 
         return true;

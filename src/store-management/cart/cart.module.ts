@@ -23,7 +23,6 @@ import { CartRedisService } from "./cart-redis.service";
     exports: [
         CartService, 
         CartRepository,
-        //Add TypeOrmModule in case of error?
     ],
 })
 

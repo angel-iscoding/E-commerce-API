@@ -20,20 +20,24 @@ export class CartController {
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     async addToCart( @Body() data: cartDto, @Request() req: ExpressRequest ): Promise<{ message: string, id: string }> {
-        const isAuthenticated: boolean = req.user ? true : false;
-        const userId: string = isAuthenticated ? req.user.id : uuidv4() ;
+        try {   
+            const isAuthenticated: boolean = req.user ? true : false;
+            const userId: string = isAuthenticated ? req.user.id : uuidv4() ;
 
-        await this.cartService.addProductToCart(
-            userId, 
-            data.products, 
-            isAuthenticated
-        );    
+            await this.cartService.addProductToCart(
+                userId, 
+                data.products, 
+                isAuthenticated
+            );    
 
-        if (isAuthenticated) {
-            return { 
-                message: `Productos: ${data.products}. Agregados al carrito del usuario.`,
-                id: userId,
-            };
+            if (isAuthenticated) {
+                return { 
+                    message: `Productos: ${data.products}. Agregados al carrito del usuario.`,
+                    id: userId,
+                };
+            }
+        } catch (error) {
+            throw new BadRequestException('No se pudo agregar el producto al carrito: ' + error.message);
         }
     }
 
@@ -41,82 +45,103 @@ export class CartController {
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     async getCart( @Body() user: idParamDto, @Request() req: ExpressRequest ): Promise<{ message: string, id: string, cart: Cart }> { 
-        const isAuthenticated: boolean = req.user ? true : false;
-        const idUser: string = isAuthenticated ? req.user.id : user.id;
-
-        const cart: Cart = await this.cartService.getCart(idUser, isAuthenticated);
-        
-        return {
-            message: `Carrito ${isAuthenticated ? '' : 'de usuario no autentificado '}obtenido con exito`,
-            id: idUser,
-            cart: cart,
-        };
+        try {
+            const isAuthenticated: boolean = req.user ? true : false;
+            const idUser: string = isAuthenticated ? req.user.id : user.id;
+    
+            const cart: Cart = await this.cartService.getCart(idUser, isAuthenticated);
+            
+            return {
+                message: `Carrito ${isAuthenticated ? '' : 'de usuario no autentificado '}obtenido con exito`,
+                id: idUser,
+                cart: cart,
+            };
+        }
+        catch (error) {
+            throw new BadRequestException('No se pudo obtener el carrito: ' + error.message);
+        }
     }
 
     @Post('process')
     @ApiBearerAuth()
     @UseGuards(AuthGuard)
     async buyCart ( @Request() req: ExpressRequest ): Promise<{ message: string, id: string }> {
-        const isAuthenticated: boolean = req.user ? true : false;
+        try {
+            const isAuthenticated: boolean = req.user ? true : false;
 
-        if (!isAuthenticated) throw new BadRequestException('No se puede comprar sin iniciar sesión');
-        const userId: string = req.user.id; 
-
-        if(await this.cartService.buyCart(userId)) {
-            return {
-                message: 'Compra realizada con exito',
-                id: userId,
+            if (!isAuthenticated) throw new BadRequestException('No se puede comprar sin iniciar sesión');
+            const userId: string = req.user.id; 
+    
+            if(await this.cartService.buyCart(userId)) {
+                return {
+                    message: 'Compra realizada con exito',
+                    id: userId,
+                }
+            } else {
+                throw new BadRequestException('No se pudo realizar la compra');
             }
-        } else {
-            throw new BadRequestException('No se pudo realizar la compra');
+        } catch (error) {
+            throw new BadRequestException('No se pudo realizar la compra: ' + error.message);
         }
-        
     }
 
     @Post('migrate')
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     async migrateCart( @Body() data: MigrateCartDto, @Request() req: ExpressRequest ): Promise<{ message: string }> {
-        const isAuthenticated: boolean = req.user ? true : false;
+        try {
+            const isAuthenticated: boolean = req.user ? true : false;
         
-        if (!isAuthenticated) throw new BadRequestException('El usuario debe estar logeado para hacer esta peticion.') 
-        
-        const userId: string = req.user.id;
-
-        await this.cartService.migrateCartToUser(data.temporaryUserId, userId);
-        return { message: 'Carrito migrado exitosamente' };
+            if (!isAuthenticated) throw new BadRequestException('El usuario debe estar logeado para hacer esta peticion.') 
+            
+            const userId: string = req.user.id;
+    
+            await this.cartService.migrateCartToUser(data.temporaryUserId, userId);
+            return { message: 'Carrito migrado exitosamente' };
+        } catch (error) {
+            throw new BadRequestException('No se pudo migrar el carrito: ' + error.message);
+        }
     }
 
     @Delete('remove')
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     async removeFromCart( @Body() data: idParamDto, @Request() req: ExpressRequest ): Promise<{ message: string }> {
-        const isAuthenticated: boolean = req.user ? true : false;
+        try {
+            const isAuthenticated: boolean = req.user ? true : false;
 
-        if (!isAuthenticated) throw new BadRequestException('El usuario debe estar logeado para hacer esta peticion.') 
+            if (!isAuthenticated) throw new BadRequestException('El usuario debe estar logeado para hacer esta peticion.') 
+            
+            const userId: string = req.user.id;
+    
+            await this.cartService.removeFromCart(
+                userId,
+                data.id,
+                isAuthenticated
+            );
+            return { message: 'Producto removido del carrito' };
+        } catch (error) {
+            throw new BadRequestException('No se pudo remover el producto del carrito: ' + error.message);
+        }
         
-        const userId: string = req.user.id;
-
-        await this.cartService.removeFromCart(
-            userId,
-            data.id,
-            isAuthenticated
-        );
-        return { message: 'Producto removido del carrito' };
     }
 
     @Delete('clear')
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     async clearCart( @Request() req: ExpressRequest ): Promise<{ message: string }> {
-        const isAuthenticated: boolean = req.user ? true : false;
+        try {
+            const isAuthenticated: boolean = req.user ? true : false;
 
-        if (!isAuthenticated) throw new BadRequestException('El usuario debe estar logeado para hacer esta peticion.') 
-        
-        const userId: string = req.user.id;
-
-
-        await this.cartService.clearCart(userId, isAuthenticated);
-        return { message: 'Carrito limpiado' };
+            if (!isAuthenticated) throw new BadRequestException('El usuario debe estar logeado para hacer esta peticion.') 
+            
+            const userId: string = req.user.id;
+    
+    
+            await this.cartService.clearCart(userId, isAuthenticated);
+            return { message: 'Carrito limpiado' };
+        } catch (error) {
+            throw new BadRequestException('No se pudo limpiar el carrito: ' + error.message);
+        }
     }
 }
