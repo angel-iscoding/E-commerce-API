@@ -1,14 +1,12 @@
-import { Body, Controller, Get, Param, Post, NotFoundException, BadRequestException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, NotFoundException, BadRequestException, UseGuards, Req, Request } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { IsUUID } from 'class-validator';
-import { OrderDto } from 'src/database/orders/order.dto';
+import { idParamDto } from 'src/database/idParamDto.dto';
+import { Role } from 'src/config/role.enum';
 import { AuthGuard } from '../../auth/auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-
-class OrderIdParam {
-  @IsUUID()
-  id: string;
-}
+import { Roles } from 'src/config/role.decorator';
+import { Request as ExpressRequest } from 'express';
+import { Order } from './order.entity';
 
 @ApiTags('Orders')
 @ApiBearerAuth()
@@ -18,6 +16,7 @@ export class OrderController {
 
     @Get()
     @UseGuards(AuthGuard)
+    @Roles(Role.Admin)
     @ApiBearerAuth()
     async getAllOrders() {
         return await this.orderService.getAllOrders();
@@ -25,8 +24,9 @@ export class OrderController {
 
     @Get(':id')
     @UseGuards(AuthGuard)
+    @Roles(Role.Admin)
     @ApiBearerAuth()
-    async getOrder(@Param() params: OrderIdParam) {
+    async getOrder(@Param() params: idParamDto) {
         const order = await this.orderService.getById(params.id);
         if (!order) {
             throw new NotFoundException('Orden no encontrada');
@@ -34,14 +34,10 @@ export class OrderController {
         return order;
     }
 
-    @Post('post')
+    @Get('orders')
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    async createOrder(@Body() createOrderDto: OrderDto) {
-        try {
-            return await this.orderService.createOrder(createOrderDto);
-        } catch (error) {
-            throw new BadRequestException('No se pudo crear la orden: ' + error.message);
-        }
+    async getOrderOfUser(@Request() req: ExpressRequest): Promise<Order[]> {
+        return await this.orderService.getOrdersOfUser(req.user.id);
     }
 }
