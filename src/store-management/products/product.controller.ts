@@ -31,12 +31,21 @@ export class ProductsController {
 
     @Get()
     async getAllProducts(@Query() paginationQuery: PaginationQueryDto): Promise<Product[]> {
-        return await this.productsService.getAllProducts();
+        try {
+            return await this.productsService.getAllProducts();
+        } catch (error) {
+            throw new BadRequestException('No se pudo obtener los productos: ' + error.message)
+        }
     }
 
     @Get(':id')
-    async getProductById(@Param('id') id: string): Promise<Product> {
-        return await this.productsService.getProductById(id);
+    async getProductById(@Param('id') id: string): Promise<{ message: string }> {
+        try {
+            const product: Product = await this.productsService.getProductById(id);
+            return { message: `Producto: ${product}` };
+        } catch (error) {
+            throw new BadRequestException('No se pudo obtener el producto: ' + error.message)
+        }
     }
 
     @Post('post')
@@ -47,7 +56,7 @@ export class ProductsController {
     async createProduct(@Body() product: ProductDto): Promise<{ message: string }> {
         try {
             const newProduct: Product = await this.productsService.createProduct(product);
-            return { message: newProduct.id };
+            return { message: `Producto creado: ${newProduct.id}` };
         } catch (error) {
             throw new BadRequestException('No se pudo crear el producto: ' + error.message)
         }
@@ -71,8 +80,8 @@ export class ProductsController {
     @Roles(Role.Admin)
     async updateProduct(@Param() params: ProductIdParam, @Body() product: ProductDto): Promise<{ message: string }>{
         try {
-            const updatedProduct = await this.productsService.updateProduct(params.id, product);
-            return { message: updatedProduct.id };
+            const updatedProduct: Product = await this.productsService.updateProduct(params.id, product);
+            return { message: `Producto: ${updatedProduct}` };
         } catch (error) {
             throw new BadRequestException('No se pudo actualizar el producto: ' + error.message)
         }
@@ -83,7 +92,7 @@ export class ProductsController {
     @UseInterceptors(DateAdderInterceptor)
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin)
-    async deleteProduct(@Param() params: ProductIdParam): Promise<{message: string}> {
+    async deleteProduct(@Param() params: ProductIdParam): Promise<{ message: string }> {
         try {
             await this.productsService.deleteProduct(params.id);
             return { message: 'Producto eliminado correctamente' }; 

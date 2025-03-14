@@ -14,19 +14,13 @@ export class ProductsService {
     }
 
     async getProductById (id: string): Promise<Product> {
-      return await this.productsRepository.getProductById(id)
-    }
+      const product: Product = await this.productsRepository.getProductById(id);
+      
+      if (!product) {
+        throw new NotFoundException('Producto no encontrado');
+      }
 
-    async createProduct (product: ProductDto): Promise<Product> {
-      return await this.productsRepository.createProduct(product);
-    }
-
-    async updateProduct (id: string, updateProduct: ProductDto): Promise<Product | undefined> { 
-      return await this.productsRepository.updateProduct(id, updateProduct);
-    }
-
-    async deleteProduct(id: string): Promise<void> {
-      return await this.productsRepository.deleteProduct(id);
+      return product;
     }
 
     async thisProductExist(name: string): Promise<boolean> {
@@ -34,13 +28,36 @@ export class ProductsService {
       return Promise.resolve(false)
     }
 
-    async updateProductImage(id: string, imageUrl: string): Promise<Product> {
-      const product = await this.productsRepository.getProductById(id);
+    async createProduct (product: ProductDto): Promise<Product> {
+      if(await this.thisProductExist(product.name)) {
+        throw new InternalServerErrorException('Producto ya existe');
+      }
+
+      return await this.productsRepository.createProduct(product);
+    }
+
+    async updateProduct (id: string, updateProduct: ProductDto): Promise<Product | undefined> { 
+      const product: Product = await this.productsRepository.getProductById(id)
       if (!product) {
         throw new NotFoundException('Producto no encontrado');
       }
-      product.imgUrl = imageUrl;
-      return this.productsRepository.updateProduct(id, product);
+      return await this.productsRepository.updateProduct(product, updateProduct);
+    }
+
+    async updateProductImage(id: string, imageUrl: string): Promise<Product> {
+      const product: Product = await this.productsRepository.getProductById(id);
+      if (!product) {
+        throw new NotFoundException('Producto no encontrado');
+      }
+      return await this.productsRepository.updateProduct(product, {...product, imgUrl: imageUrl});
+    }
+    
+    async deleteProduct(id: string): Promise<void> {
+      if (!await this.productsRepository.getProductById(id)) {
+        throw new NotFoundException('Producto no encontrado');
+      }
+
+      return await this.productsRepository.deleteProduct(id);
     }
 
     async preloadProducts(): Promise<void> {
@@ -51,7 +68,6 @@ export class ProductsService {
               "price": 199.99,
               "stock": 12,
               "imgUrl": "None",
-  
             },
             {
               "name": "Samsung Galaxy S23",
@@ -59,7 +75,6 @@ export class ProductsService {
               "price": 150.0,
               "stock": 12,
               "imgUrl": "None",
-  
             },
             {
               "name": "Motorola Edge 40",
@@ -67,7 +82,6 @@ export class ProductsService {
               "price": 179.89,
               "stock": 12,
               "imgUrl": "None",
-  
             },
             {
               "name": "Samsung Odyssey G9",
@@ -75,42 +89,42 @@ export class ProductsService {
               "price": 299.99,
               "stock": 12,
               "imgUrl": "None",
-          },
+            },
             {
               "name": "LG UltraGear",
               "description": "The best monitor in the world",
               "price": 199.99,
               "stock": 12,
               "imgUrl": "None",
-          },
+            },
             {
               "name": "Acer Predator",
               "description": "The best monitor in the world",
               "price": 150.0,
               "stock": 12,
               "imgUrl": "None",
-          },
+            },
             {
               "name": "Razer BlackWidow V3",
               "description": "The best keyboard in the world",
               "price": 99.99,
               "stock": 12,
               "imgUrl": "None",
-             },
+            },
             {
               "name": "Corsair K70",
               "description": "The best keyboard in the world",
               "price": 79.99,
               "stock": 12,
               "imgUrl": "None",
-             },
+            },
             {
               "name": "Logitech G Pro",
               "description": "The best keyboard in the world",
               "price": 59.99,
               "stock": 12,
               "imgUrl": "None",
-             },
+            },
             {
               "name": "Razer Viper",
               "description": "The best mouse in the world",
