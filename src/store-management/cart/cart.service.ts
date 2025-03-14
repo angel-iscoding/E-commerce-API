@@ -21,7 +21,7 @@ export class CartService {
     }
 
     async thisUserExist (userId: string): Promise<boolean> {
-        const user = await this.userRepository.getUserById(userId);
+        const user: User | undefined = await this.userRepository.getUserById(userId);
         return user ? true : false  
     }
 
@@ -89,13 +89,11 @@ export class CartService {
     }
 
     async buyCart(userId: string): Promise<boolean> {
-        const user = await this.userRepository.getUserById(userId);
+        const user: User = await this.userRepository.getUserById(userId);
         
         if (!user) throw new NotFoundException('Usuario no encontrado');
 
-        console.log(user.cart);
-        
-        const cart = await this.cartRepository.getCartById(user.cart.id);
+        const cart: Cart = await this.cartRepository.getCartById(user.id);
 
         if (!cart) throw new NotFoundException('Carrito no encontrado');
 
@@ -103,7 +101,8 @@ export class CartService {
         // ...
 
         // Limpiar carrito
-        await this.cartRepository.clearCart(userId);
+
+        await this.cartRepository.clearCart(cart);
 
         return true;
     }
@@ -172,7 +171,7 @@ export class CartService {
     async clearCart(userId: string, isAuthenticated: boolean): Promise<void> {
         if (isAuthenticated) {
             // Limpiar carrito en la base de datos
-            await this.cartRepository.clearCart(userId);
+            await this.cartRepository.clearCart(await this.cartRepository.getCartByUserId(userId));
         } else {
             // Limpiar carrito en Redis
             await this.cartRedisService.removeTemporaryCart(userId);

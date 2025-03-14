@@ -6,9 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { Cart } from './cart.entity';
 import { cartDto } from 'src/database/cart/cartDto.dto';
 import { MigrateCartDto } from 'src/database/cart/migrateCartDto.dto';
-import { RemoveFromCartDto } from 'src/database/cart/removeFromCartDto.dto';
-import { UserIdParam } from 'src/database/users/userIdParam.dto';
 import { Request as ExpressRequest } from 'express';
+import { idParamDto } from 'src/database/idParamDto.dto';
 
 @ApiTags('Cart')
 @Controller('cart')
@@ -41,13 +40,15 @@ export class CartController {
     @Get(':id')
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    async getCart( @Param() idUser: UserIdParam, @Request() req: ExpressRequest ): Promise<{ message: string, id: string, cart: Cart }> { 
+    async getCart( @Body() user: idParamDto, @Request() req: ExpressRequest ): Promise<{ message: string, id: string, cart: Cart }> { 
         const isAuthenticated: boolean = req.user ? true : false;
-        const cart: Cart = await this.cartService.getCart(idUser.id, isAuthenticated);
+        const idUser: string = isAuthenticated ? req.user.id : user.id;
+
+        const cart: Cart = await this.cartService.getCart(idUser, isAuthenticated);
         
         return {
             message: `Carrito ${isAuthenticated ? '' : 'de usuario no autentificado '}obtenido con exito`,
-            id: idUser.id,
+            id: idUser,
             cart: cart,
         };
     }
@@ -61,11 +62,15 @@ export class CartController {
         if (!isAuthenticated) throw new BadRequestException('No se puede comprar sin iniciar sesión');
         const userId: string = req.user.id; 
 
-        await this.cartService.buyCart(userId)
-        return {
-            message: 'Compra realizada con exito',
-            id: userId,
+        if(await this.cartService.buyCart(userId)) {
+            return {
+                message: 'Compra realizada con exito',
+                id: userId,
+            }
+        } else {
+            throw new BadRequestException('No se pudo realizar la compra');
         }
+        
     }
 
     @Post('migrate')
@@ -85,11 +90,16 @@ export class CartController {
     @Delete('remove')
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    async removeFromCart( @Body() data: RemoveFromCartDto, @Request() req: ExpressRequest ): Promise<{ message: string }> {
+    async removeFromCart( @Body() data: idParamDto, @Request() req: ExpressRequest ): Promise<{ message: string }> {
         const isAuthenticated: boolean = req.user ? true : false;
+
+        if (!isAuthenticated) throw new BadRequestException('El usuario debe estar logeado para hacer esta peticion.') 
+        
+        const userId: string = req.user.id;
+
         await this.cartService.removeFromCart(
-            data.userId,
-            data.productId,
+            userId,
+            data.id,
             isAuthenticated
         );
         return { message: 'Producto removido del carrito' };
@@ -98,10 +108,13 @@ export class CartController {
     @Delete('clear')
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    async clearCart( @Body() data: UserIdParam, @Request() req: ExpressRequest ): Promise<{ message: string }> {
+    async clearCart( @Request() req: ExpressRequest ): Promise<{ message: string }> {
         const isAuthenticated: boolean = req.user ? true : false;
 
-        const userId : string = isAuthenticated ? req.user.id : data.id;
+        if (!isAuthenticated) throw new BadRequestException('El usuario debe estar logeado para hacer esta peticion.') 
+        
+        const userId: string = req.user.id;
+
 
         await this.cartService.clearCart(userId, isAuthenticated);
         return { message: 'Carrito limpiado' };

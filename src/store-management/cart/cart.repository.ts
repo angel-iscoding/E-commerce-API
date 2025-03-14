@@ -19,7 +19,7 @@ export class CartRepository {
     }
 
     async getCartById(id: string): Promise<Cart> {
-        const cart = await this.cartRepository.findOne({
+        const cart: Cart = await this.cartRepository.findOne({
             where: { id },
             relations: ['products', 'user']
         });
@@ -49,7 +49,7 @@ export class CartRepository {
     }
 
     async create(user: User): Promise<Cart> {
-        const cart = await this.cartRepository.create({ user });
+        const cart = this.cartRepository.create({ user });
         return await this.cartRepository.save(cart) 
     }
 
@@ -64,8 +64,7 @@ export class CartRepository {
         await this.save(cart);
     }
 
-    async clearCart(userId: string): Promise<void> {
-        const cart = await this.getCartByUserId(userId);
+    async clearCart(cart: Cart): Promise<void> {
         
         cart.products = [];
         cart.price = 0;
