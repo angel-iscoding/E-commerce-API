@@ -116,7 +116,7 @@ export class UsersRepository {
   ];
 
   async getAllUsers(page: number = 1, limit: number = 5): Promise<Omit<User[], 'password'>[]>   {
-    const users: User[] = await this.usersRepository.find(); 
+    const users: User[] = await this.usersRepository.find({relations: ['orders', 'cart']}); 
 
     const pages = []
 
@@ -131,11 +131,11 @@ export class UsersRepository {
   }
 
   async getUserById(id: string): Promise<User | null> {
-    return await this.usersRepository.findOne({ where: {id: id}}); 
+    return await this.usersRepository.findOne({ where: {id: id}, relations: ['orders', 'cart']}); 
   }
 
   async findOneByEmail(email: string): Promise<User | null> {
-    return await this.usersRepository.findOne({ where: {email: email}}); 
+    return await this.usersRepository.findOne({ where: {email: email}, relations: ['orders', 'cart']}); 
   }
 
   async create(user: UserDto): Promise<User> {
@@ -157,7 +157,7 @@ export class UsersRepository {
 
     await this.usersRepository.update(userToUpdate.id, updateUser);    
 
-    return  await this.usersRepository.findOne({ where: { id: id } });
+    return  await this.usersRepository.findOne({ where: { id: id }, relations: ['orders', 'cart'] });
   }
 
   async deleteUser(id: string): Promise<void> {
