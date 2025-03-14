@@ -5,6 +5,8 @@ import { UsersRepository } from '../../user-management/users/user.repository';
 import { ProductsRepository } from '../products/product.repository';
 import { OrderDto } from 'src/database/orders/order.dto';
 import { CartService } from '../cart/cart.service';
+import { User } from 'src/user-management/users/user.entity';
+import { Product } from '../products/product.entity';
 
 @Injectable()
 export class OrderService {
@@ -18,34 +20,27 @@ export class OrderService {
     async createOrder(order: OrderDto): Promise<Order> {
 
         const user = await this.usersRepository.getUserById(order.user);
-        const timestamp = new Date();
+        const timestamp: Date = new Date();
 
         if (!user) throw new NotFoundException('No existe el usuario');
 
         // Crear la orden sin detalles iniciales
-        const newOrder = new Order();
+        const newOrder: Order = await this.ordersRepository.create(user);
         newOrder.date = timestamp;
 
         // Obtener productos existentes l
         const products = await this.cartService.getAllProductsOfUserCart(user.id)
 
-        const existingProducts = await Promise.all (
+        newOrder.product = await Promise.all (
             products.map(async (productId) => {
                 const product = await this.productsRepository.getProductById(productId);
                 return product || null;
             })
         )
 
-        // Guardar la nueva orden en la base de datos
-        const createdOrder = await this.ordersRepository.save(newOrder);
+        newOrder.price = newOrder.product.reduce((sum, product) => sum + product.price, 0); 
 
-        const totalPrice = existingProducts.reduce((sum, product) => sum + product.price, 0); 
-
-        createdOrder.price = totalPrice;
-
-        // Guardar la orden con su detalle
-
-        return await this.ordersRepository.save(createdOrder);
+        return await this.ordersRepository.save(newOrder);
     }
 
 
@@ -55,5 +50,12 @@ export class OrderService {
 
     async getById(id: string): Promise<Order | null> {
         return await this.ordersRepository.getById(id);
+    }
+
+    async getOrdersOfUser(id: string): Promise<Order[]> {
+        const user: User = await this.usersRepository.getUserById(id);
+        if (!user) throw new NotFoundException('Usuario no encontrado');
+
+        return user.orders;
     }
 }

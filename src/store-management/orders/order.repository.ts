@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Order } from "./order.entity";
 import { Repository } from "typeorm";
 import { OrderDto } from "src/database/orders/order.dto";
+import { User } from "src/user-management/users/user.entity";
 
 @Injectable()
 export class OrderRepository {
@@ -12,13 +13,13 @@ export class OrderRepository {
     ) {}
 
     async getAllOrders(): Promise<Order[]> {
-        return await this.ordersRepository.find()
+        return await this.ordersRepository.find({relations: ['user']});
     }
     async getById(id: string): Promise<Order | null> {
-        return await this.ordersRepository.findOne({where: {id: id}});
+        return await this.ordersRepository.findOne({where: {id: id}, relations: ['user']});
     }
-    async create(order: Order): Promise<Order> {
-        return await this.ordersRepository.create(order);
+    async create(user: User): Promise<Order> {
+        return await this.ordersRepository.create(user);
     }
     async save(order: Order): Promise<Order> {
         return await this.ordersRepository.save(order);
