@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Payments</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        #paypal-button-container {
+            width: 300px;
+            margin: 20px;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div id="paypal-button-container"></div>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        // Función para mostrar mensajes de feedback
+        function showMessage(message, isSuccess) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${isSuccess ? 'success' : 'error'}`;
+        }
+
+        // Obtener el client-id de PayPal desde el servidor
+        fetch('/config/paypal')
+            .then(response => response.json())
+            .then(config => {
+                const script = document.createElement('script');
+                script.src = `https://www.paypal.com/sdk/js?client-id=${config.clientId}&currency=USD`;
+                script.onload = function () {
+                    // Configuración del botón de PayPal
+                    paypal.Buttons({
+                        createOrder: function (data, actions) {
+                            return fetch('/payments/create-order', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    amount: '100.00',
+                                    currency: 'USD',
+                                }),
+                            })
+                            .then((response) => {
+                                if (!response.ok) {
+                                    throw new Error('Error al crear la orden');
+                                }
+                                return response.json();
+                            })
+                            .then((order) => {
+                                return order.id;
+                            })
+                            .catch((error) => {
+                                showMessage('Error al crear la orden: ' + error.message, false);
+                                console.error(error);
+                            });
+                        },
+
+                        onApprove: function (data, actions) {
+                            return fetch(`/payments/capture-order`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    orderId: data.orderID,
+                                }),
+                            })
+                            .then((response) => {
+                                if (!response.ok) {
+                                    throw new Error('Error al capturar la orden');
+                                }
+                                return response.json();
+                            })
+                            .then((details) => {
+                                showMessage(`Pago completado: ${details.payer.name.given_name}`, true);
+                            })
+                            .catch((error) => {
+                                showMessage('Error al capturar la orden: ' + error.message, false);
+                                console.error(error);
+                            });
+                        },
+
+                        onError: function (error) {
+                            showMessage('Error en el proceso de pago: ' + error.message, false);
+                            console.error(error);
+                        },
+                    }).render('#paypal-button-container');
+                };
+                document.body.appendChild(script);
+            })
+            .catch(error => {
+                showMessage('Error al cargar el SDK de PayPal: ' + error.message, false);
+                console.error(error);
+            });
+    </script>
+</body>
+</html>
