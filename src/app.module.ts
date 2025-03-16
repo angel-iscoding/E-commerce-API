@@ -10,6 +10,8 @@ import { OrderModule } from "./store-management/orders/order.module";
 import { AuthModule } from "./auth/auth.module";
 import { CloudModule } from "./cloud/cloud.module";
 import { CartModule } from "./store-management/cart/cart.module";
+import { PaymentsModule } from "./payments/payments.module"; // Importa el módulo de pagos
+
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -28,12 +30,12 @@ import { CartModule } from "./store-management/cart/cart.module";
         ProductsModule,
         CategoriesModule,
         OrderModule,
-        CloudModule
+        CloudModule,
+        PaymentsModule 
     ],
     controllers: [],
     providers: [],
 })
-
 export class AppModule implements OnApplicationBootstrap {
     constructor(
         /* private readonly categoriesService: CategoriesService, */

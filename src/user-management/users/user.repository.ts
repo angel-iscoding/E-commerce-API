@@ -164,6 +164,6 @@ export class UsersRepository {
     const userToDelete = await this.getUserById(id); 
     if (!userToDelete) return;
 
-    await this.usersRepository.delete(userToDelete); 
+    await this.usersRepository.delete(userToDelete.id); 
   }
 }

@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, OneToOne } from 'typeorm';
 import { Order } from '../../store-management/orders/order.entity'; 
 import { Cart } from 'src/store-management/cart/cart.entity';
+import { Role } from 'src/config/role.enum';
 
 @Entity({ name: 'users' })
 export class User {
@@ -28,8 +29,8 @@ export class User {
   @Column()
   city: string;
 
-  @Column({ default: false })
-  admin: boolean;
+  @Column('simple-array', {default: Role.User})
+  roles: Role[];
 
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[]; 

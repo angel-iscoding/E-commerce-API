@@ -51,7 +51,7 @@ export class ProductsController {
     @Post('post')
     @ApiBearerAuth()
     @UseGuards(AuthGuard)
-    @Roles(Role.Admin)
+    @Roles(Role.Admin, Role.Trader)
     @UseInterceptors(DateAdderInterceptor)
     async createProduct(@Body() product: ProductDto): Promise<{ message: string }> {
         try {
@@ -64,7 +64,7 @@ export class ProductsController {
 
     @Post('seeder')
     @UseGuards(AuthGuard)
-    @Roles(Role.Admin)
+    @Roles(Role.Admin, Role.Trader)
     @ApiBearerAuth()
     async seederProducts() {
         if((await this.productsService.getAllProducts()).length) {
@@ -77,7 +77,7 @@ export class ProductsController {
     @Put('put/:id')
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(Role.Admin)
+    @Roles(Role.Admin, Role.Trader)
     async updateProduct(@Param() params: ProductIdParam, @Body() product: ProductDto): Promise<{ message: string }>{
         try {
             const updatedProduct: Product = await this.productsService.updateProduct(params.id, product);
@@ -91,7 +91,7 @@ export class ProductsController {
     @ApiBearerAuth()
     @UseInterceptors(DateAdderInterceptor)
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(Role.Admin)
+    @Roles(Role.Admin, Role.Trader)
     async deleteProduct(@Param() params: ProductIdParam): Promise<{ message: string }> {
         try {
             await this.productsService.deleteProduct(params.id);

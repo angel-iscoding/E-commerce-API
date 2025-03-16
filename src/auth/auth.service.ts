@@ -31,7 +31,7 @@ export class AuthService {
     async signIn(email: string, password: string): Promise<string | null> {
         const user: User = await this.usersService.comparePassword(email, password);
 
-        const payload: PayloadDto = { email: user.email, id: user.id, roles: user.admin ? [Role.Admin] : [Role.User] };
+        const payload: PayloadDto = { email: user.email, id: user.id, roles: user.roles };
         return this.jwtService.sign(payload, { secret: `${process.env.JWT_SECRET}` });
     }
 }
