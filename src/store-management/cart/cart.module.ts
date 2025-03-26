@@ -7,11 +7,13 @@ import { CartService } from "./cart.service";
 import { UsersModule } from "src/user-management/users/user.module";
 import { ProductsModule } from "../products/product.module";
 import { CartRedisService } from "./cart-redis.service";
+import { OrderModule } from "../orders/order.module";
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Cart]),
         ProductsModule,
+        forwardRef(() => OrderModule),
         forwardRef(() => UsersModule)
     ],
     providers: [

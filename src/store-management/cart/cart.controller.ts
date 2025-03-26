@@ -62,7 +62,7 @@ export class CartController {
         }
     }
 
-    @Post('process')
+    @Post('purchase')
     @ApiBearerAuth()
     @UseGuards(AuthGuard)
     async buyCart ( @Request() req: ExpressRequest ): Promise<{ message: string, id: string }> {
@@ -70,9 +70,11 @@ export class CartController {
             const isAuthenticated: boolean = req.user ? true : false;
 
             if (!isAuthenticated) throw new BadRequestException('No se puede comprar sin iniciar sesión');
+            
             const userId: string = req.user.id; 
     
-            if(await this.cartService.buyCart(userId)) {
+            const response = await this.cartService.buyCart(userId);
+            if (response) {
                 return {
                     message: 'Compra realizada con exito',
                     id: userId,

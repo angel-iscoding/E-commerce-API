@@ -6,6 +6,8 @@ import { ProductsRepository } from '../products/product.repository';
 import { Product } from '../products/product.entity';
 import { CartRedisService } from './cart-redis.service';
 import { User } from 'src/user-management/users/user.entity';
+import { OrderRepository } from '../orders/order.repository';
+import { Order } from '../orders/order.entity';
 
 @Injectable()
 export class CartService {
@@ -13,6 +15,7 @@ export class CartService {
         private cartRepository: CartRepository,
         private userRepository: UsersRepository,
         private productRepostory: ProductsRepository,
+        private orderRepository: OrderRepository,
         private cartRedisService: CartRedisService,
     ) {}
 
@@ -88,13 +91,10 @@ export class CartService {
         return await this.cartRepository.save(cart);
     }
 
-    async buyCart(userId: string): Promise<boolean> {
+    async buyCart(userId: string): Promise<Order> {
         const user: User = await this.userRepository.getUserById(userId);
-        
         if (!user) throw new NotFoundException('Usuario no encontrado');
-
         const cart: Cart = await this.cartRepository.getCartById(user.id);
-
         if (!cart) throw new NotFoundException('Carrito no encontrado');
 
         // Lógica para realizar la compra
@@ -106,9 +106,18 @@ export class CartService {
             await this.productRepostory.downStock(product);
         });
 
+        const order: Order = await this.orderRepository.create(user);
+        
+        order.date = new Date();
+        order.product = cart.products;
+        order.price = cart.price;
+        order.status = 'pending';
+
+        await this.orderRepository.save(order);
+
         await this.cartRepository.clearCart(cart);
 
-        return true;
+        return order;
     }
 
 
